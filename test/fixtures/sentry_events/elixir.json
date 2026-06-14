@@ -1,0 +1,39 @@
+{
+  "event_id": "dddddddddddddddddddddddddddddddd",
+  "timestamp": "not-a-timestamp",
+  "platform": "elixir",
+  "logger": "FaultlineWeb.Endpoint",
+  "level": "error",
+  "culprit": "FaultlineWeb.OrderController.create/2",
+  "release": "faultline@0.1.0",
+  "environment": "dev",
+  "server_name": "localhost",
+  "tags": {
+    "otp_app": "faultline"
+  },
+  "user": {},
+  "request": {
+    "url": "http://localhost:4000/orders"
+  },
+  "exception": {
+    "values": [
+      {
+        "type": "RuntimeError",
+        "value": "boom",
+        "mechanism": {
+          "type": "plug",
+          "handled": false
+        },
+        "stacktrace": {
+          "frames": [
+            {
+              "filename": "lib/faultline_web/controllers/order_controller.ex",
+              "function": "create/2",
+              "lineno": 12
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

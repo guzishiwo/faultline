@@ -1,0 +1,35 @@
+{
+  "event_id": "cccccccccccccccccccccccccccccccc",
+  "timestamp": "2026-06-14T15:02:00+00:00",
+  "platform": "ruby",
+  "logger": "rails",
+  "level": "fatal",
+  "culprit": "OrdersController#create",
+  "release": "api@9f6a",
+  "environment": "production",
+  "server_name": "api-1",
+  "user": {
+    "ip_address": "203.0.113.10"
+  },
+  "request": {
+    "url": "https://api.example.com/orders",
+    "method": "POST"
+  },
+  "exception": {
+    "values": [
+      {
+        "type": "ActiveRecord::RecordInvalid",
+        "value": "Validation failed",
+        "stacktrace": {
+          "frames": [
+            {
+              "filename": "app/controllers/orders_controller.rb",
+              "function": "create",
+              "lineno": 17
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

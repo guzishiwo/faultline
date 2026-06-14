@@ -1,0 +1,42 @@
+{
+  "event_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "timestamp": 1781449261.123456,
+  "platform": "python",
+  "logger": "payments.worker",
+  "level": "warning",
+  "culprit": "payments.tasks.capture",
+  "release": "payments@2026.6.14",
+  "environment": "staging",
+  "server_name": "worker-2",
+  "tags": [
+    ["queue", "critical"],
+    ["tenant", "acme"]
+  ],
+  "user": {
+    "username": "ops-user"
+  },
+  "request": {
+    "url": "https://api.example.com/payments/capture"
+  },
+  "exception": {
+    "values": [
+      {
+        "type": "ValueError",
+        "value": "invalid capture amount",
+        "mechanism": {
+          "type": "generic",
+          "handled": true
+        },
+        "stacktrace": {
+          "frames": [
+            {
+              "filename": "payments/tasks.py",
+              "function": "capture",
+              "lineno": 88
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

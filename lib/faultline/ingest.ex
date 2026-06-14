@@ -4,6 +4,7 @@ defmodule Faultline.Ingest do
   """
 
   alias Faultline.Ingest.RawEvent
+  alias Faultline.Events
   alias Faultline.Projects.Project
   alias Faultline.Repo
   alias Faultline.Sentry.Auth
@@ -91,6 +92,16 @@ defmodule Faultline.Ingest do
     %RawEvent{}
     |> RawEvent.changeset(attrs)
     |> Repo.insert()
+    |> case do
+      {:ok, raw_event} ->
+        case Events.normalize_raw_event(raw_event) do
+          {:ok, _event} -> {:ok, raw_event}
+          {:error, changeset} -> {:error, changeset}
+        end
+
+      {:error, changeset} ->
+        {:error, changeset}
+    end
   end
 
   defp decode_envelope(body) do

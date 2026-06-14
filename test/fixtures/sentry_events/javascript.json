@@ -1,0 +1,54 @@
+{
+  "event_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "timestamp": "2026-06-14T15:00:00Z",
+  "platform": "javascript",
+  "logger": "console",
+  "level": "error",
+  "culprit": "checkout.submit",
+  "message": "TypeError: Cannot read properties of undefined",
+  "release": "web@1.2.3",
+  "environment": "production",
+  "server_name": "web-1",
+  "tags": {
+    "browser": "Chrome",
+    "region": "iad"
+  },
+  "user": {
+    "id": "user-123",
+    "email": "buyer@example.com"
+  },
+  "request": {
+    "url": "https://example.com/checkout",
+    "method": "POST"
+  },
+  "breadcrumbs": {
+    "values": [
+      {
+        "category": "ui.click",
+        "message": "Submit order"
+      }
+    ]
+  },
+  "exception": {
+    "values": [
+      {
+        "type": "TypeError",
+        "value": "Cannot read properties of undefined",
+        "mechanism": {
+          "type": "onerror",
+          "handled": false
+        },
+        "stacktrace": {
+          "frames": [
+            {
+              "filename": "app.js",
+              "function": "submitOrder",
+              "lineno": 42,
+              "colno": 13
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

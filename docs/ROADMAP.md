@@ -41,13 +41,13 @@ Goal: accept basic Sentry SDK error events through familiar endpoints.
 
 Goal: convert raw SDK payloads into a stable internal event model.
 
-- [ ] Extract event id, timestamp, platform, logger, level, culprit, and message.
-- [ ] Extract exception type, value, mechanism, and stacktrace frames.
-- [ ] Extract tags, user, request, release, environment, and server name.
-- [ ] Extract breadcrumbs.
-- [ ] Store normalized event data in queryable columns plus JSONB details.
-- [ ] Add validation for malformed but acceptable SDK payloads.
-- [ ] Add fixtures for Elixir, JavaScript, Python, and Ruby SDK events.
+- [x] Extract event id, timestamp, platform, logger, level, culprit, and message.
+- [x] Extract exception type, value, mechanism, and stacktrace frames.
+- [x] Extract tags, user, request, release, environment, and server name.
+- [x] Extract breadcrumbs.
+- [x] Store normalized event data in queryable columns plus JSONB details.
+- [x] Add validation for malformed but acceptable SDK payloads.
+- [x] Add fixtures for Elixir, JavaScript, Python, and Ruby SDK events.
 
 ## Milestone 4: Issue Grouping
 
