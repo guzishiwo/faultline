@@ -64,13 +64,13 @@ Goal: group repeated events into actionable issues.
 
 Goal: provide the first useful operator workflow.
 
-- [ ] Add issue list LiveView with keyset pagination.
-- [ ] Add issue detail LiveView with latest events.
-- [ ] Show stacktrace, breadcrumbs, tags, request, user, release, and environment.
-- [ ] Add status transitions: unresolved, resolved, ignored.
-- [ ] Broadcast new issues and issue updates with Phoenix PubSub.
-- [ ] Use LiveView streams for issue collections.
-- [ ] Load raw event JSON on demand.
+- [x] Add issue list LiveView with keyset pagination.
+- [x] Add issue detail LiveView with latest events.
+- [x] Show stacktrace, breadcrumbs, tags, request, user, release, and environment.
+- [x] Add status transitions: unresolved, resolved, ignored.
+- [x] Broadcast new issues and issue updates with Phoenix PubSub.
+- [x] Use LiveView streams for issue collections.
+- [x] Load raw event JSON on demand.
 
 ## Milestone 6: Alerts and Notifications
 

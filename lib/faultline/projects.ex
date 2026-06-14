@@ -22,6 +22,11 @@ defmodule Faultline.Projects do
   end
 
   @doc """
+  Gets a single project.
+  """
+  def get_project!(id), do: Repo.get!(Project, id)
+
+  @doc """
   Creates a project and stores its Sentry-compatible DSN.
   """
   def create_project(attrs, opts \\ []) do

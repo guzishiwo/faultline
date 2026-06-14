@@ -89,6 +89,13 @@ defmodule FaultlineWeb.ProjectLive.Index do
                   events
                 </p>
                 <p>per {project.rate_limit_window_seconds}s</p>
+                <.link
+                  id={"project-issues-link-#{project.id}"}
+                  navigate={~p"/projects/#{project.id}/issues"}
+                  class="mt-2 inline-flex items-center gap-1 font-semibold text-base-content transition hover:text-orange-600"
+                >
+                  Issues <.icon name="hero-arrow-right" class="size-3" />
+                </.link>
               </div>
             </article>
           </div>

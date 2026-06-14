@@ -20,6 +20,8 @@ defmodule FaultlineWeb.Router do
     get "/", PageController, :home
     live "/projects", ProjectLive.Index, :index
     live "/projects/new", ProjectLive.New, :new
+    live "/projects/:project_id/issues", IssueLive.Index, :index
+    live "/projects/:project_id/issues/:id", IssueLive.Show, :show
   end
 
   # Other scopes may use custom stacks.

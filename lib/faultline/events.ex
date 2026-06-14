@@ -39,4 +39,28 @@ defmodule Faultline.Events do
     |> order_by([event], desc: event.occurred_at, desc: event.id)
     |> Repo.all()
   end
+
+  @doc """
+  Lists the latest events for an issue.
+  """
+  def list_issue_events(issue_id, opts \\ []) do
+    limit = Keyword.get(opts, :limit, 20)
+
+    Event
+    |> where([event], event.issue_id == ^issue_id)
+    |> order_by([event], desc: event.occurred_at, desc: event.id)
+    |> limit(^limit)
+    |> Repo.all()
+  end
+
+  @doc """
+  Gets an issue event and its raw event payload.
+  """
+  def get_issue_event_with_raw!(issue_id, event_id) do
+    Event
+    |> where([event], event.issue_id == ^issue_id)
+    |> where([event], event.id == ^event_id)
+    |> preload(:raw_event)
+    |> Repo.one!()
+  end
 end

@@ -12,6 +12,7 @@ defmodule Faultline.Issues do
   alias Faultline.Repo
 
   @reopen_statuses ~w(resolved)
+  @default_page_size 20
 
   @doc """
   Groups an event into an issue and links the event to it.
@@ -37,8 +38,12 @@ defmodule Faultline.Issues do
     end)
     |> Repo.transaction()
     |> case do
-      {:ok, %{updated_issue: issue, event: event}} -> {:ok, issue, event}
-      {:error, _operation, reason, _changes} -> {:error, reason}
+      {:ok, %{updated_issue: issue, event: event}} ->
+        broadcast_issue_change(issue)
+        {:ok, issue, event}
+
+      {:error, _operation, reason, _changes} ->
+        {:error, reason}
     end
   end
 
@@ -49,6 +54,14 @@ defmodule Faultline.Issues do
     issue
     |> Issue.status_changeset(status)
     |> Repo.update()
+    |> case do
+      {:ok, issue} ->
+        broadcast_issue_change(issue)
+        {:ok, issue}
+
+      {:error, changeset} ->
+        {:error, changeset}
+    end
   end
 
   def list_project_issues(project_id) do
@@ -56,6 +69,38 @@ defmodule Faultline.Issues do
     |> where([issue], issue.project_id == ^project_id)
     |> order_by([issue], desc: issue.last_seen_at, desc: issue.id)
     |> Repo.all()
+  end
+
+  def paginate_project_issues(project_id, opts \\ []) do
+    limit = Keyword.get(opts, :limit, @default_page_size)
+    cursor = Keyword.get(opts, :after)
+
+    issues =
+      Issue
+      |> where([issue], issue.project_id == ^project_id)
+      |> after_cursor(cursor)
+      |> order_by([issue], desc: issue.last_seen_at, desc: issue.id)
+      |> limit(^(limit + 1))
+      |> Repo.all()
+
+    {page, remaining} = Enum.split(issues, limit)
+
+    %{
+      issues: page,
+      next_cursor: next_cursor(page, remaining)
+    }
+  end
+
+  def get_project_issue!(project_id, issue_id) do
+    Repo.get_by!(Issue, project_id: project_id, id: issue_id)
+  end
+
+  def subscribe(project_id) do
+    Phoenix.PubSub.subscribe(Faultline.PubSub, topic(project_id))
+  end
+
+  def broadcast_issue_change(%Issue{} = issue) do
+    Phoenix.PubSub.broadcast(Faultline.PubSub, topic(issue.project_id), {:issue_changed, issue})
   end
 
   defp create_issue!(repo, event, fingerprint) do
@@ -111,4 +156,48 @@ defmodule Faultline.Issues do
   defp max_datetime(first, second) do
     if DateTime.compare(first, second) == :lt, do: second, else: first
   end
+
+  defp after_cursor(query, nil), do: query
+  defp after_cursor(query, ""), do: query
+
+  defp after_cursor(query, cursor) when is_binary(cursor) do
+    case decode_cursor(cursor) do
+      {:ok, last_seen_at, id} ->
+        where(
+          query,
+          [issue],
+          issue.last_seen_at < ^last_seen_at or
+            (issue.last_seen_at == ^last_seen_at and issue.id < ^id)
+        )
+
+      :error ->
+        query
+    end
+  end
+
+  defp next_cursor(_page, []), do: nil
+  defp next_cursor([], _remaining), do: nil
+
+  defp next_cursor(page, _remaining) do
+    issue = List.last(page)
+    encode_cursor(issue)
+  end
+
+  defp encode_cursor(issue) do
+    timestamp = DateTime.to_unix(issue.last_seen_at, :microsecond)
+    "#{timestamp}:#{issue.id}"
+  end
+
+  defp decode_cursor(cursor) do
+    with [timestamp, id] <- String.split(cursor, ":", parts: 2),
+         {timestamp, ""} <- Integer.parse(timestamp),
+         {id, ""} <- Integer.parse(id),
+         {:ok, last_seen_at} <- DateTime.from_unix(timestamp, :microsecond) do
+      {:ok, last_seen_at, id}
+    else
+      _ -> :error
+    end
+  end
+
+  defp topic(project_id), do: "project:#{project_id}:issues"
 end
