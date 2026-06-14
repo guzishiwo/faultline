@@ -6,6 +6,7 @@ defmodule Faultline.Issues do
   import Ecto.Query, warn: false
 
   alias Ecto.Multi
+  alias Faultline.Alerts
   alias Faultline.Events.Event
   alias Faultline.Issues.Grouping
   alias Faultline.Issues.Issue
@@ -22,13 +23,22 @@ defmodule Faultline.Issues do
 
     Multi.new()
     |> Multi.run(:issue, fn repo, _changes ->
-      issue =
-        repo.get_by(Issue, project_id: event.project_id, fingerprint: fingerprint) ||
-          create_issue!(repo, event, fingerprint)
-
+      case repo.get_by(Issue, project_id: event.project_id, fingerprint: fingerprint) do
+        nil -> {:ok, {create_issue!(repo, event, fingerprint), true}}
+        issue -> {:ok, {issue, false}}
+      end
+    end)
+    |> Multi.run(:alert_trigger, fn _repo, %{issue: {issue, created?}} ->
+      cond do
+        created? -> {:ok, "new_issue"}
+        issue.status in @reopen_statuses -> {:ok, "regression"}
+        true -> {:ok, nil}
+      end
+    end)
+    |> Multi.run(:issue_for_update, fn _repo, %{issue: {issue, _created?}} ->
       {:ok, issue}
     end)
-    |> Multi.run(:updated_issue, fn repo, %{issue: issue} ->
+    |> Multi.run(:updated_issue, fn repo, %{issue_for_update: issue} ->
       issue
       |> update_issue_attrs(event)
       |> then(&repo.update(Issue.changeset(issue, &1)))
@@ -38,13 +48,21 @@ defmodule Faultline.Issues do
     end)
     |> Repo.transaction()
     |> case do
-      {:ok, %{updated_issue: issue, event: event}} ->
+      {:ok, %{updated_issue: issue, event: event, alert_trigger: alert_trigger}} ->
         broadcast_issue_change(issue)
+        dispatch_alerts(event, issue, alert_trigger)
         {:ok, issue, event}
 
       {:error, _operation, reason, _changes} ->
         {:error, reason}
     end
+  end
+
+  defp dispatch_alerts(_event, _issue, nil), do: :ok
+
+  defp dispatch_alerts(event, issue, trigger) do
+    _deliveries = Alerts.dispatch_issue_alerts(event.project_id, issue, event, trigger)
+    :ok
   end
 
   @doc """

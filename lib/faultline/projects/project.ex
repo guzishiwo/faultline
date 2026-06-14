@@ -3,6 +3,8 @@ defmodule Faultline.Projects.Project do
 
   import Ecto.Changeset
 
+  alias Faultline.Alerts.AlertRule
+
   @type t :: %__MODULE__{}
 
   schema "projects" do
@@ -13,6 +15,8 @@ defmodule Faultline.Projects.Project do
     field :dsn, :string
     field :rate_limit_max_events, :integer, default: 1000
     field :rate_limit_window_seconds, :integer, default: 60
+
+    has_many :alert_rules, AlertRule
 
     timestamps(type: :utc_datetime)
   end

@@ -93,12 +93,12 @@ Goal: provide the first useful operator workflow.
 
 Goal: notify teams about new and regressed issues.
 
-- [ ] Add alert rules per project.
-- [ ] Add email notification adapter.
-- [ ] Add webhook notification adapter.
-- [ ] Add Slack-compatible webhook adapter.
-- [ ] Add per-issue notification deduplication.
-- [ ] Add tests for alert fanout and suppression.
+- [x] Add alert rules per project.
+- [x] Add email notification adapter.
+- [x] Add webhook notification adapter.
+- [x] Add Slack-compatible webhook adapter.
+- [x] Add per-issue notification deduplication.
+- [x] Add tests for alert fanout and suppression.
 
 ## Milestone 7: Retention and Cost Controls
 
