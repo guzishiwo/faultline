@@ -34,10 +34,9 @@ defmodule FaultlineWeb.ProjectLiveTest do
 
     assert has_element?(index_view, "#projects-#{project.id}")
     assert has_element?(index_view, "#project-open-link-#{project.id}")
-    assert has_element?(index_view, "#project-dsn-summary-#{project.id}")
-    assert has_element?(index_view, "#project-dsn-#{project.id}")
     assert has_element?(index_view, "#project-issues-link-#{project.id}")
-    assert has_element?(index_view, "#project-alerts-link-#{project.id}")
+    assert has_element?(index_view, "#project-settings-link-#{project.id}")
+    refute has_element?(index_view, "#projects-#{project.id} code")
   end
 
   test "validates the project form", %{conn: conn} do

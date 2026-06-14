@@ -122,7 +122,7 @@ defmodule FaultlineWeb.IssueLiveTest do
     {:ok, view, _html} = live(conn, ~p"/projects")
 
     assert has_element?(view, "#project-issues-link-#{project.id}")
-    assert has_element?(view, "#project-alerts-link-#{project.id}")
+    assert has_element?(view, "#project-settings-link-#{project.id}")
   end
 
   defp event_fixture(project, fixture, overrides \\ %{}) do

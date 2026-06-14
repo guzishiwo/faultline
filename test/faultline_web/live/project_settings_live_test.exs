@@ -1,4 +1,4 @@
-defmodule FaultlineWeb.AlertLiveTest do
+defmodule FaultlineWeb.ProjectSettingsLiveTest do
   use FaultlineWeb.ConnCase, async: true
 
   import Phoenix.LiveViewTest
@@ -8,11 +8,15 @@ defmodule FaultlineWeb.AlertLiveTest do
 
   setup :register_and_log_in_user
 
-  test "creates, edits, toggles, and deletes project alert rules", %{conn: conn} do
+  test "shows project settings and manages alert rules", %{conn: conn} do
     project = project_fixture()
 
-    {:ok, view, _html} = live(conn, ~p"/projects/#{project.id}/alerts")
+    {:ok, view, _html} = live(conn, ~p"/projects/#{project.id}/settings")
 
+    assert has_element?(view, "#project-settings-page")
+    assert has_element?(view, "#project-sdk-settings")
+    assert has_element?(view, "#project-dsn", project.dsn)
+    assert has_element?(view, "#project-ingest-settings")
     assert has_element?(view, "#alert-rules")
     assert has_element?(view, "#alert-rule-form")
     assert has_element?(view, "#alert-rules-empty-state")
@@ -86,7 +90,7 @@ defmodule FaultlineWeb.AlertLiveTest do
   test "shows validation errors for invalid alert targets", %{conn: conn} do
     project = project_fixture()
 
-    {:ok, view, _html} = live(conn, ~p"/projects/#{project.id}/alerts")
+    {:ok, view, _html} = live(conn, ~p"/projects/#{project.id}/settings")
 
     view
     |> form("#alert-rule-form",
@@ -105,12 +109,12 @@ defmodule FaultlineWeb.AlertLiveTest do
     assert has_element?(view, "#alert-rule-form", "must be an email")
   end
 
-  test "project list links to alert settings", %{conn: conn} do
+  test "project list links to project settings", %{conn: conn} do
     project = project_fixture()
 
     {:ok, view, _html} = live(conn, ~p"/projects")
 
-    assert has_element?(view, "#project-alerts-link-#{project.id}")
+    assert has_element?(view, "#project-settings-link-#{project.id}")
   end
 
   defp project_fixture do
