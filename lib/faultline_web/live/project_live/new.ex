@@ -36,7 +36,7 @@ defmodule FaultlineWeb.ProjectLive.New do
   @impl true
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash}>
+    <Layouts.app flash={@flash} current_scope={@current_scope}>
       <div class="mx-auto grid w-full max-w-5xl gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <section class="space-y-6">
           <.link

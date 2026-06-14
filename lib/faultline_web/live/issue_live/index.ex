@@ -48,7 +48,7 @@ defmodule FaultlineWeb.IssueLive.Index do
   @impl true
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash}>
+    <Layouts.app flash={@flash} current_scope={@current_scope}>
       <div class="mx-auto w-full max-w-7xl space-y-6">
         <header class="flex flex-col gap-4 border-b border-base-300 pb-5 lg:flex-row lg:items-end lg:justify-between">
           <div class="space-y-2">

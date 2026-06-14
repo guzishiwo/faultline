@@ -10,6 +10,8 @@ defmodule FaultlineWeb.IssueLiveTest do
 
   @fixtures Path.expand("../../fixtures/sentry_events", __DIR__)
 
+  setup :register_and_log_in_user
+
   test "lists project issues and links to details", %{conn: conn} do
     project = project_fixture()
     event = event_fixture(project, "javascript.json")

@@ -24,6 +24,23 @@ Goal: let a user create a project and obtain a Sentry-compatible DSN.
 - [x] Add project-level rate limit settings.
 - [x] Add tests for DSN generation and validation.
 
+## Milestone 1.5: Users and Admin Controls
+
+Goal: require login for the product console and give operators a small admin surface.
+
+- [x] Add Phoenix authentication with registration, login, logout, settings, and email confirmation flow.
+- [x] Add user roles with `member` and `admin`.
+- [x] Protect project and issue LiveViews behind authentication.
+- [x] Add admin-only user management route.
+- [x] Add admin LiveView for listing users and changing roles.
+- [x] Prevent demoting the last admin user.
+- [x] Update the home page for Faultline product positioning and user entry points.
+- [x] Add a first-user bootstrap path that makes the first registered user an admin.
+- [ ] Add invite-only registration mode.
+- [ ] Add audit log entries for role changes.
+- [ ] Add organization and team membership model.
+- [ ] Scope projects to an organization.
+
 ## Milestone 2: Sentry Ingest MVP
 
 Goal: accept basic Sentry SDK error events through familiar endpoints.

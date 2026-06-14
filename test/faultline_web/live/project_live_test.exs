@@ -6,6 +6,8 @@ defmodule FaultlineWeb.ProjectLiveTest do
   alias Faultline.Projects.Project
   alias Faultline.Repo
 
+  setup :register_and_log_in_user
+
   test "lists an empty project registry", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/projects")
 

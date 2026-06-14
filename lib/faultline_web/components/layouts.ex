@@ -35,35 +35,49 @@ defmodule FaultlineWeb.Layouts do
 
   def app(assigns) do
     ~H"""
-    <header class="navbar px-4 sm:px-6 lg:px-8">
+    <header class="navbar border-b border-base-300 bg-base-100 px-4 sm:px-6 lg:px-8">
       <div class="flex-1">
-        <a href="/" class="flex-1 flex w-fit items-center gap-2">
-          <img src={~p"/images/logo.svg"} width="36" />
-          <span class="text-sm font-semibold">v{Application.spec(:phoenix, :vsn)}</span>
+        <a href="/" class="flex w-fit items-center gap-3">
+          <span class="flex size-9 items-center justify-center rounded-lg bg-base-content text-sm font-bold text-base-100">
+            F
+          </span>
+          <span class="text-base font-semibold tracking-normal">Faultline</span>
         </a>
       </div>
-      <div class="flex-none">
-        <ul class="flex flex-column px-1 space-x-4 items-center">
-          <li>
-            <a href="https://phoenixframework.org/" class="btn btn-ghost">Website</a>
+
+      <div class="flex-none overflow-x-auto">
+        <ul class="flex items-center gap-2 px-1">
+          <li :if={@current_scope && @current_scope.user}>
+            <.link navigate={~p"/projects"} class="btn btn-ghost btn-sm">Projects</.link>
           </li>
-          <li>
-            <a href="https://github.com/phoenixframework/phoenix" class="btn btn-ghost">GitHub</a>
+          <li :if={@current_scope && @current_scope.user && @current_scope.user.role == "admin"}>
+            <.link navigate={~p"/admin/users"} class="btn btn-ghost btn-sm">Admin</.link>
           </li>
           <li>
             <.theme_toggle />
           </li>
-          <li>
-            <a href="https://hexdocs.pm/phoenix/overview.html" class="btn btn-primary">
-              Get Started <span aria-hidden="true">&rarr;</span>
-            </a>
+          <li :if={@current_scope && @current_scope.user}>
+            <.link navigate={~p"/users/settings"} class="btn btn-ghost btn-sm">
+              Settings
+            </.link>
+          </li>
+          <li :if={@current_scope && @current_scope.user}>
+            <.link href={~p"/users/log-out"} method="delete" class="btn btn-ghost btn-sm">
+              Log out
+            </.link>
+          </li>
+          <li :if={!@current_scope || !@current_scope.user}>
+            <.link navigate={~p"/users/log-in"} class="btn btn-ghost btn-sm">Log in</.link>
+          </li>
+          <li :if={!@current_scope || !@current_scope.user}>
+            <.link navigate={~p"/users/register"} class="btn btn-neutral btn-sm">Register</.link>
           </li>
         </ul>
       </div>
     </header>
 
-    <main class="px-4 py-20 sm:px-6 lg:px-8">
-      <div class="mx-auto max-w-2xl space-y-4">
+    <main class="px-4 py-10 sm:px-6 lg:px-8">
+      <div class="mx-auto max-w-7xl space-y-4">
         {render_slot(@inner_block)}
       </div>
     </main>
