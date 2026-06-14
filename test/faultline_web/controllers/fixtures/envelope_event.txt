@@ -1,0 +1,5 @@
+{"event_id":"22222222222222222222222222222222","sent_at":"2026-06-14T14:51:00Z"}
+{"type":"event"}
+{"event_id":"22222222222222222222222222222222","timestamp":"2026-06-14T14:51:00Z","platform":"python","level":"error","message":"Envelope fixture exception"}
+{"type":"client_report"}
+{"discarded_events":[{"reason":"sample_rate","category":"error","quantity":1}]}

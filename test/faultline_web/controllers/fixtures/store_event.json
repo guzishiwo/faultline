@@ -1,0 +1,15 @@
+{
+  "event_id": "11111111111111111111111111111111",
+  "timestamp": "2026-06-14T14:50:00Z",
+  "platform": "javascript",
+  "level": "error",
+  "message": "Captured fixture exception",
+  "exception": {
+    "values": [
+      {
+        "type": "Error",
+        "value": "Captured fixture exception"
+      }
+    ]
+  }
+}

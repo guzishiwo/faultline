@@ -28,14 +28,14 @@ Goal: let a user create a project and obtain a Sentry-compatible DSN.
 
 Goal: accept basic Sentry SDK error events through familiar endpoints.
 
-- [ ] Add `FaultlineWeb.IngestController`.
-- [ ] Implement `POST /api/:project_id/store/`.
-- [ ] Implement `POST /api/:project_id/envelope/`.
-- [ ] Parse `X-Sentry-Auth` and query-string auth.
-- [ ] Persist raw event payloads before normalization.
-- [ ] Return Sentry-compatible success responses for accepted events.
-- [ ] Accept and ignore unknown envelope item types.
-- [ ] Add controller tests using captured sample payloads.
+- [x] Add `FaultlineWeb.IngestController`.
+- [x] Implement `POST /api/:project_id/store/`.
+- [x] Implement `POST /api/:project_id/envelope/`.
+- [x] Parse `X-Sentry-Auth` and query-string auth.
+- [x] Persist raw event payloads before normalization.
+- [x] Return Sentry-compatible success responses for accepted events.
+- [x] Accept and ignore unknown envelope item types.
+- [x] Add controller tests using captured sample payloads.
 
 ## Milestone 3: Event Normalization
 

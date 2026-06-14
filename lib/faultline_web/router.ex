@@ -23,9 +23,12 @@ defmodule FaultlineWeb.Router do
   end
 
   # Other scopes may use custom stacks.
-  # scope "/api", FaultlineWeb do
-  #   pipe_through :api
-  # end
+  scope "/api", FaultlineWeb do
+    pipe_through :api
+
+    post "/:project_id/store/", IngestController, :store
+    post "/:project_id/envelope/", IngestController, :envelope
+  end
 
   # Enable LiveDashboard and Swoosh mailbox preview in development
   if Application.compile_env(:faultline, :dev_routes) do
