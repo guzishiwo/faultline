@@ -17,12 +17,12 @@ Goal: make the repository easy to run, test, and deploy locally.
 
 Goal: let a user create a project and obtain a Sentry-compatible DSN.
 
-- [ ] Create `projects` context.
-- [ ] Add project schema with slug, name, public key, secret key, and DSN fields.
-- [ ] Add project creation and listing LiveViews.
-- [ ] Generate a Sentry-compatible DSN format.
-- [ ] Add project-level rate limit settings.
-- [ ] Add tests for DSN generation and validation.
+- [x] Create `projects` context.
+- [x] Add project schema with slug, name, public key, secret key, and DSN fields.
+- [x] Add project creation and listing LiveViews.
+- [x] Generate a Sentry-compatible DSN format.
+- [x] Add project-level rate limit settings.
+- [x] Add tests for DSN generation and validation.
 
 ## Milestone 2: Sentry Ingest MVP
 

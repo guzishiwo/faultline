@@ -18,6 +18,8 @@ defmodule FaultlineWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+    live "/projects", ProjectLive.Index, :index
+    live "/projects/new", ProjectLive.New, :new
   end
 
   # Other scopes may use custom stacks.

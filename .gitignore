@@ -35,3 +35,5 @@ faultline-*.tar
 npm-debug.log
 /assets/node_modules/
 
+.agents/skills
+skills-lock.json
