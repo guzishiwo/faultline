@@ -8,6 +8,7 @@ defmodule Faultline.Events do
   alias Faultline.Events.Event
   alias Faultline.Events.Normalizer
   alias Faultline.Ingest.RawEvent
+  alias Faultline.Issues
   alias Faultline.Repo
 
   @doc """
@@ -17,6 +18,16 @@ defmodule Faultline.Events do
     %Event{}
     |> Event.changeset(Normalizer.normalize(raw_event))
     |> Repo.insert()
+    |> case do
+      {:ok, event} ->
+        case Issues.group_event(event) do
+          {:ok, _issue, grouped_event} -> {:ok, grouped_event}
+          {:error, reason} -> {:error, reason}
+        end
+
+      {:error, changeset} ->
+        {:error, changeset}
+    end
   end
 
   @doc """

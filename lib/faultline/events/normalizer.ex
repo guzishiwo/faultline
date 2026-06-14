@@ -86,6 +86,7 @@ defmodule Faultline.Events.Normalizer do
         "mechanism" => map_value(exception, "mechanism"),
         "stacktrace_frames" => stacktrace_frames(exception)
       },
+      "fingerprint" => fingerprint(payload),
       "request" => request,
       "tags" => tags(payload),
       "user" => user
@@ -99,6 +100,9 @@ defmodule Faultline.Events.Normalizer do
 
   defp breadcrumbs(%{"breadcrumbs" => %{"values" => values}}) when is_list(values), do: values
   defp breadcrumbs(_payload), do: []
+
+  defp fingerprint(%{"fingerprint" => fingerprint}) when is_list(fingerprint), do: fingerprint
+  defp fingerprint(_payload), do: []
 
   defp tags(%{"tags" => tags}) when is_map(tags), do: tags
 

@@ -53,12 +53,12 @@ Goal: convert raw SDK payloads into a stable internal event model.
 
 Goal: group repeated events into actionable issues.
 
-- [ ] Design initial grouping fingerprint.
-- [ ] Respect explicit SDK fingerprint when present.
-- [ ] Group by exception type, normalized stacktrace, platform, and culprit.
-- [ ] Track first seen, last seen, event count, affected users, and status.
-- [ ] Reopen resolved issues when a new matching event arrives.
-- [ ] Add unit tests for grouping stability.
+- [x] Design initial grouping fingerprint.
+- [x] Respect explicit SDK fingerprint when present.
+- [x] Group by exception type, normalized stacktrace, platform, and culprit.
+- [x] Track first seen, last seen, event count, affected users, and status.
+- [x] Reopen resolved issues when a new matching event arrives.
+- [x] Add unit tests for grouping stability.
 
 ## Milestone 5: LiveView Triage UI
 
