@@ -1,0 +1,38 @@
+name: Sentry Compatibility
+description: Track an SDK or protocol compatibility gap.
+title: "[Compatibility]: "
+labels: ["compatibility", "sentry-protocol"]
+body:
+  - type: input
+    id: sdk
+    attributes:
+      label: SDK
+      description: Language and SDK version, if known.
+      placeholder: "sentry-javascript 8.x"
+    validations:
+      required: false
+  - type: textarea
+    id: payload
+    attributes:
+      label: Payload or Envelope Shape
+      description: Paste a redacted payload, envelope item summary, or failing request shape.
+      render: text
+    validations:
+      required: false
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Compatibility
+      description: What should Faultline accept, store, display, or ignore?
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      placeholder: |
+        - [ ] Request returns the expected status code.
+        - [ ] Event is normalized without losing required fields.
+        - [ ] Tests cover the sample payload.
+    validations:
+      required: true
