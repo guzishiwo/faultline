@@ -68,6 +68,7 @@ defmodule FaultlineWeb.IssueLiveTest do
 
     assert has_element?(view, "#issue-status", "unresolved")
     assert has_element?(view, "#issue-event-#{event.id}")
+    assert has_element?(view, "#stack-frame-1")
     assert has_element?(view, "#load-raw-event-#{event.id}")
 
     view
@@ -81,6 +82,8 @@ defmodule FaultlineWeb.IssueLiveTest do
     |> render_click()
 
     assert has_element?(view, "#raw-event-json")
+    assert has_element?(view, "#raw-event-json .json-key")
+    assert has_element?(view, "#raw-event-json .json-string")
   end
 
   test "project list links to issue triage", %{conn: conn} do

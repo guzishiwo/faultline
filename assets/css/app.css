@@ -103,3 +103,41 @@
 [data-phx-session], [data-phx-teleported-src] { display: contents }
 
 /* This file is for your main application CSS */
+
+.json-view {
+  color: color-mix(in oklch, var(--color-base-content) 82%, transparent);
+  scrollbar-color: color-mix(in oklch, var(--color-base-content) 35%, transparent) transparent;
+}
+
+.json-view code {
+  display: block;
+  min-width: 100%;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  tab-size: 2;
+}
+
+.json-view .json-key {
+  color: var(--color-info);
+}
+
+.json-view .json-string {
+  color: var(--color-success);
+}
+
+.json-view .json-number {
+  color: var(--color-warning);
+}
+
+.json-view .json-boolean,
+.json-view .json-null {
+  color: var(--color-error);
+}
+
+.json-view .json-punctuation {
+  color: color-mix(in oklch, var(--color-base-content) 48%, transparent);
+}
+
+.stacktrace-list {
+  scrollbar-color: color-mix(in oklch, var(--color-base-content) 28%, transparent) transparent;
+}

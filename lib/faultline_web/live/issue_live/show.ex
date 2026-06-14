@@ -18,7 +18,7 @@ defmodule FaultlineWeb.IssueLive.Show do
      |> assign(:project, project)
      |> assign(:issue, issue)
      |> assign(:events, events)
-     |> assign(:raw_event_json, nil)
+     |> assign(:raw_event_payload, nil)
      |> assign(:selected_event_id, nil)}
   end
 
@@ -36,13 +36,9 @@ defmodule FaultlineWeb.IssueLive.Show do
   def handle_event("load_raw", %{"id" => event_id}, socket) do
     event = Events.get_issue_event_with_raw!(socket.assigns.issue.id, event_id)
 
-    raw_event_json =
-      event.raw_event.payload
-      |> Jason.encode!(pretty: true)
-
     {:noreply,
      socket
-     |> assign(:raw_event_json, raw_event_json)
+     |> assign(:raw_event_payload, event.raw_event.payload)
      |> assign(:selected_event_id, event.id)}
   end
 
@@ -130,17 +126,17 @@ defmodule FaultlineWeb.IssueLive.Show do
           </div>
         </section>
 
-        <section class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_26rem]">
+        <section class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(28rem,34rem)]">
           <div id="issue-events" class="space-y-4">
             <article
               :for={event <- @events}
               id={"issue-event-#{event.id}"}
-              class="rounded-lg border border-base-300 bg-base-100 p-5 shadow-sm"
+              class="overflow-hidden rounded-lg border border-base-300 bg-base-100 shadow-sm"
             >
-              <div class="flex flex-col gap-3 border-b border-base-300 pb-4 lg:flex-row lg:items-start lg:justify-between">
+              <div class="flex flex-col gap-3 border-b border-base-300 p-5 lg:flex-row lg:items-start lg:justify-between">
                 <div class="min-w-0">
                   <p class="font-mono text-xs text-base-content/50">{event.event_id}</p>
-                  <h2 class="mt-1 truncate text-lg font-semibold text-base-content">
+                  <h2 class="mt-1 text-lg font-semibold leading-7 text-base-content">
                     {event.message || event.exception_value || "Event"}
                   </h2>
                   <p class="mt-1 text-sm text-base-content/60">
@@ -154,14 +150,14 @@ defmodule FaultlineWeb.IssueLive.Show do
                   type="button"
                   phx-click="load_raw"
                   phx-value-id={event.id}
-                  class="inline-flex w-fit items-center gap-2 rounded-lg border border-base-300 px-3 py-2 text-sm font-semibold text-base-content/70 transition hover:-translate-y-0.5 hover:text-base-content"
+                  class="inline-flex w-fit shrink-0 items-center gap-2 rounded-lg border border-base-300 px-3 py-2 text-sm font-semibold text-base-content/70 transition hover:-translate-y-0.5 hover:border-base-content/30 hover:bg-base-200 hover:text-base-content"
                 >
                   <.icon name="hero-code-bracket" class="size-4" /> Raw JSON
                 </button>
               </div>
 
-              <div class="mt-4 grid gap-4 lg:grid-cols-2">
-                <dl class="grid gap-2 text-sm">
+              <div class="grid gap-5 p-5">
+                <dl class="grid gap-x-5 gap-y-3 text-sm sm:grid-cols-2">
                   <.kv label="Exception" value={compact_exception(event)} />
                   <.kv label="Culprit" value={event.culprit} />
                   <.kv label="Release" value={event.release} />
@@ -171,12 +167,14 @@ defmodule FaultlineWeb.IssueLive.Show do
                   <.kv label="Request" value={event.request_url} />
                 </dl>
 
-                <div class="space-y-4">
-                  <.map_section title="Tags" values={event.details["tags"] || %{}} />
+                <div class="grid gap-5 border-t border-base-300 pt-5">
+                  <div class="grid gap-5 lg:grid-cols-2">
+                    <.map_section title="Tags" values={event.details["tags"] || %{}} />
+                    <.breadcrumbs values={event.details["breadcrumbs"] || []} />
+                  </div>
                   <.stacktrace frames={
                     get_in(event.details, ["exception", "stacktrace_frames"]) || []
                   } />
-                  <.breadcrumbs values={event.details["breadcrumbs"] || []} />
                 </div>
               </div>
             </article>
@@ -184,9 +182,9 @@ defmodule FaultlineWeb.IssueLive.Show do
 
           <aside
             id="raw-event-panel"
-            class="h-fit rounded-lg border border-base-300 bg-base-100 p-4 shadow-sm"
+            class="h-fit overflow-hidden rounded-lg border border-base-300 bg-base-100 shadow-sm"
           >
-            <div class="flex items-center justify-between gap-3">
+            <div class="flex items-center justify-between gap-3 border-b border-base-300 px-4 py-3">
               <h2 class="text-sm font-semibold uppercase tracking-[0.14em] text-base-content/50">
                 Raw event
               </h2>
@@ -195,12 +193,11 @@ defmodule FaultlineWeb.IssueLive.Show do
               </span>
             </div>
             <pre
-              :if={@raw_event_json}
+              :if={@raw_event_payload}
               id="raw-event-json"
-              phx-no-curly-interpolation
-              class="mt-3 max-h-[36rem] overflow-auto rounded-md bg-base-200 p-3 text-xs leading-5 text-base-content"
-            ><%= @raw_event_json %></pre>
-            <p :if={!@raw_event_json} class="mt-3 text-sm leading-6 text-base-content/60">
+              class="json-view max-h-[44rem] overflow-auto bg-base-200 p-4 text-xs leading-5"
+            ><code phx-no-curly-interpolation><%= raw(json_html(@raw_event_payload)) %></code></pre>
+            <p :if={!@raw_event_payload} class="p-4 text-sm leading-6 text-base-content/60">
               Select an event to load its raw SDK payload.
             </p>
           </aside>
@@ -215,9 +212,9 @@ defmodule FaultlineWeb.IssueLive.Show do
 
   defp kv(assigns) do
     ~H"""
-    <div class="grid grid-cols-[7rem_minmax(0,1fr)] gap-3">
+    <div class="min-w-0">
       <dt class="text-base-content/50">{@label}</dt>
-      <dd class="min-w-0 truncate font-medium text-base-content">{@value || "-"}</dd>
+      <dd class="mt-1 break-words font-medium text-base-content">{@value || "-"}</dd>
     </div>
     """
   end
@@ -234,8 +231,8 @@ defmodule FaultlineWeb.IssueLive.Show do
       <div class="mt-2 grid gap-1 text-sm">
         <p :if={map_size(@values) == 0} class="text-base-content/50">None</p>
         <div :for={{key, value} <- @values} class="grid grid-cols-[7rem_minmax(0,1fr)] gap-2">
-          <span class="truncate text-base-content/50">{key}</span>
-          <span class="truncate font-medium text-base-content">{inspect(value)}</span>
+          <span class="break-words text-base-content/50">{key}</span>
+          <span class="break-words font-medium text-base-content">{inspect(value)}</span>
         </div>
       </div>
     </section>
@@ -250,16 +247,38 @@ defmodule FaultlineWeb.IssueLive.Show do
       <h3 class="text-xs font-semibold uppercase tracking-[0.14em] text-base-content/50">
         Stacktrace
       </h3>
-      <div class="mt-2 space-y-1">
-        <p :if={@frames == []} class="text-sm text-base-content/50">No frames</p>
+      <div class="stacktrace-list mt-2 overflow-hidden rounded-lg border border-base-300 bg-base-200/60">
+        <p :if={@frames == []} class="p-3 text-sm text-base-content/50">No frames</p>
         <div
-          :for={frame <- @frames}
-          class="rounded-md bg-base-200 px-3 py-2 font-mono text-xs text-base-content"
+          :for={{frame, index} <- Enum.with_index(Enum.reverse(@frames), 1)}
+          id={"stack-frame-#{index}"}
+          class="grid gap-3 border-b border-base-300 px-3 py-3 last:border-b-0 md:grid-cols-[2.5rem_minmax(0,1fr)]"
         >
-          <p class="truncate">{frame["function"] || frame["module"] || "anonymous"}</p>
-          <p class="truncate text-base-content/50">
-            {frame["filename"] || frame["abs_path"] || "unknown"}:{frame["lineno"] || "?"}
-          </p>
+          <div class="font-mono text-xs text-base-content/40 md:pt-1">
+            #{index}
+          </div>
+          <div class="min-w-0">
+            <div class="flex flex-wrap items-center gap-2">
+              <p class="break-words font-mono text-sm font-semibold text-base-content">
+                {frame["function"] || frame["module"] || "anonymous"}
+              </p>
+              <span
+                :if={frame["in_app"]}
+                class="rounded border border-error/20 bg-error/10 px-1.5 py-0.5 text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-error"
+              >
+                app
+              </span>
+            </div>
+            <p class="mt-1 break-words font-mono text-xs leading-5 text-base-content/55">
+              {frame_location(frame)}
+            </p>
+            <p
+              :if={frame["context_line"]}
+              class="mt-2 rounded bg-base-100 px-3 py-2 font-mono text-xs text-base-content/70"
+            >
+              {frame["context_line"]}
+            </p>
+          </div>
         </div>
       </div>
     </section>
@@ -295,6 +314,106 @@ defmodule FaultlineWeb.IssueLive.Show do
       value -> value
     end
   end
+
+  defp frame_location(frame) do
+    filename = frame["filename"] || frame["abs_path"] || "unknown"
+    line = frame["lineno"] || "?"
+    column = frame["colno"]
+
+    if column do
+      "#{filename}:#{line}:#{column}"
+    else
+      "#{filename}:#{line}"
+    end
+  end
+
+  defp json_html(value) do
+    value
+    |> json_value(0)
+    |> IO.iodata_to_binary()
+  end
+
+  defp json_value(value, indent) when is_map(value) do
+    entries =
+      value
+      |> Enum.sort_by(fn {key, _value} -> to_string(key) end)
+
+    case entries do
+      [] ->
+        token("json-punctuation", "{}")
+
+      entries ->
+        [
+          token("json-punctuation", "{"),
+          "\n",
+          entries
+          |> Enum.map(fn {key, child} ->
+            [
+              indent(indent + 1),
+              json_string(to_string(key), "json-key"),
+              token("json-punctuation", ":"),
+              " ",
+              json_value(child, indent + 1)
+            ]
+          end)
+          |> join_with([token("json-punctuation", ","), "\n"]),
+          "\n",
+          indent(indent),
+          token("json-punctuation", "}")
+        ]
+    end
+  end
+
+  defp json_value(value, indent) when is_list(value) do
+    case value do
+      [] ->
+        token("json-punctuation", "[]")
+
+      values ->
+        [
+          token("json-punctuation", "["),
+          "\n",
+          values
+          |> Enum.map(fn child -> [indent(indent + 1), json_value(child, indent + 1)] end)
+          |> join_with([token("json-punctuation", ","), "\n"]),
+          "\n",
+          indent(indent),
+          token("json-punctuation", "]")
+        ]
+    end
+  end
+
+  defp json_value(value, _indent) when is_binary(value), do: json_string(value, "json-string")
+
+  defp json_value(value, _indent) when is_integer(value),
+    do: token("json-number", Integer.to_string(value))
+
+  defp json_value(value, _indent) when is_float(value),
+    do: token("json-number", Jason.encode!(value))
+
+  defp json_value(true, _indent), do: token("json-boolean", "true")
+  defp json_value(false, _indent), do: token("json-boolean", "false")
+  defp json_value(nil, _indent), do: token("json-null", "null")
+  defp json_value(value, indent), do: json_value(to_string(value), indent)
+
+  defp json_string(value, class) do
+    token(class, Jason.encode!(value))
+  end
+
+  defp token(class, value) do
+    escaped_value =
+      value
+      |> Phoenix.HTML.html_escape()
+      |> Phoenix.HTML.safe_to_string()
+
+    ["<span class=\"", class, "\">", escaped_value, "</span>"]
+  end
+
+  defp indent(level), do: String.duplicate("  ", level)
+
+  defp join_with([], _separator), do: []
+  defp join_with([item], _separator), do: item
+  defp join_with([item | rest], separator), do: [item, separator, join_with(rest, separator)]
 
   defp format_time(%DateTime{} = datetime), do: Calendar.strftime(datetime, "%Y-%m-%d %H:%M")
 end

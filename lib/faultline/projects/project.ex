@@ -71,9 +71,8 @@ defmodule Faultline.Projects.Project do
   defp ensure_slug(slug), do: slug
 
   defp random_key do
-    24
+    16
     |> :crypto.strong_rand_bytes()
-    |> Base.url_encode64(padding: false)
-    |> binary_part(0, 32)
+    |> Base.encode16(case: :lower)
   end
 end

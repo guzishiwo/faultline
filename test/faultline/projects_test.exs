@@ -23,6 +23,8 @@ defmodule Faultline.ProjectsTest do
       assert project.rate_limit_window_seconds == 30
       assert byte_size(project.public_key) == 32
       assert byte_size(project.secret_key) == 32
+      assert project.public_key =~ ~r/^[a-f0-9]{32}$/
+      assert project.secret_key =~ ~r/^[a-f0-9]{32}$/
 
       assert project.dsn ==
                "https://#{project.public_key}:#{project.secret_key}@errors.example.com/#{project.id}"
