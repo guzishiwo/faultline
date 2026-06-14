@@ -44,34 +44,114 @@ defmodule Faultline.Issues.Grouping do
   end
 
   defp default_fingerprint(event) do
-    frames =
-      event
-      |> stacktrace_frames()
-      |> Enum.map(&frame_signature/1)
+    case grouping_frame(event) do
+      nil ->
+        hash([
+          "default-v2",
+          "message",
+          event.platform,
+          event.exception_type,
+          normalize_message(event.message)
+        ])
 
-    hash([
-      "default",
-      event.platform,
-      event.culprit,
-      event.exception_type,
-      frames
-    ])
+      frame ->
+        hash([
+          "default-v2",
+          "stacktrace",
+          event.platform,
+          event.exception_type,
+          frame_function(frame),
+          frame_path(frame)
+        ])
+    end
   end
 
   defp stacktrace_frames(event) do
     get_in(event.details, ["exception", "stacktrace_frames"]) || []
   end
 
-  defp frame_signature(frame) when is_map(frame) do
-    [
-      Map.get(frame, "module"),
-      Map.get(frame, "function"),
-      Map.get(frame, "filename") || Map.get(frame, "abs_path"),
-      Map.get(frame, "lineno")
-    ]
+  defp grouping_frame(event) do
+    frames =
+      event
+      |> stacktrace_frames()
+      |> Enum.filter(&is_map/1)
+      |> Enum.reverse()
+
+    Enum.find(frames, &(&1["in_app"] == true)) ||
+      Enum.find(frames, &(not runtime_frame?(&1))) ||
+      List.first(frames)
   end
 
-  defp frame_signature(frame), do: frame
+  defp runtime_frame?(frame) do
+    path = frame_path(frame)
+
+    path == nil or
+      String.starts_with?(path, "node:internal/") or
+      String.contains?(path, "/node_modules/@sentry/") or
+      String.contains?(path, "/node_modules/@opentelemetry/")
+  end
+
+  defp frame_function(frame) do
+    frame
+    |> Map.get("function", Map.get(frame, "module"))
+    |> normalize_text()
+  end
+
+  defp frame_path(frame) do
+    frame
+    |> Map.get("filename", Map.get(frame, "abs_path"))
+    |> normalize_path()
+  end
+
+  defp normalize_path(nil), do: nil
+
+  defp normalize_path(path) do
+    path =
+      path
+      |> to_string()
+      |> String.trim()
+      |> String.replace("\\", "/")
+      |> String.split(["?", "#"], parts: 2)
+      |> List.first()
+
+    cond do
+      path == "" ->
+        nil
+
+      String.starts_with?(path, "node:") ->
+        path
+
+      true ->
+        path
+        |> String.split("/", trim: true)
+        |> Enum.take(-3)
+        |> Enum.join("/")
+    end
+  end
+
+  defp normalize_message(nil), do: nil
+
+  defp normalize_message(message) do
+    message
+    |> normalize_text()
+    |> String.replace(~r/"[^"]*"/, "\"?\"")
+    |> String.replace(~r/'[^']*'/, "'?'")
+    |> String.replace(~r/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/i, "?")
+    |> String.replace(~r/\b[0-9a-f]{16,}\b/i, "?")
+    |> String.replace(~r/\b\d+\b/, "?")
+  end
+
+  defp normalize_text(nil), do: nil
+
+  defp normalize_text(value) do
+    value
+    |> to_string()
+    |> String.trim()
+    |> case do
+      "" -> nil
+      text -> text
+    end
+  end
 
   defp hash(values) do
     values

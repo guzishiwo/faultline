@@ -12,7 +12,7 @@ defmodule Faultline.IssuesTest do
   @fixtures Path.expand("../fixtures/sentry_events", __DIR__)
 
   describe "grouping fingerprints" do
-    test "groups repeated events by exception type, stacktrace, platform, and culprit" do
+    test "groups repeated events by exception type and top application frame" do
       project = project_fixture()
 
       first =
@@ -36,6 +36,75 @@ defmodule Faultline.IssuesTest do
       issue = Repo.get!(Issue, first.issue_id)
       assert issue.event_count == 2
       assert issue.affected_user_count == 2
+    end
+
+    test "keeps the same issue when line numbers and runtime frames change" do
+      project = project_fixture()
+
+      first =
+        "javascript.json"
+        |> fixture_payload()
+        |> put_in(["exception", "values", Access.at(0), "stacktrace", "frames"], [
+          %{
+            "filename" => "node:internal/modules/esm/module_job",
+            "function" => "ModuleJob.run",
+            "lineno" => 430
+          },
+          %{
+            "abs_path" => "/Users/dev/faultline/assets/js/checkout.js",
+            "filename" => "assets/js/checkout.js",
+            "function" => "submitOrder",
+            "lineno" => 42,
+            "in_app" => true
+          }
+        ])
+        |> normalize_payload(project)
+
+      second =
+        "javascript.json"
+        |> fixture_payload()
+        |> Map.put("event_id", "dddddddddddddddddddddddddddddddd")
+        |> Map.put("message", "TypeError: Cannot read properties of undefined")
+        |> put_in(["exception", "values", Access.at(0), "stacktrace", "frames"], [
+          %{
+            "filename" => "node:internal/modules/run_main",
+            "function" => "asyncRunEntryPointWithESMLoader",
+            "lineno" => 101
+          },
+          %{
+            "abs_path" => "/opt/releases/2026-06-15/faultline/assets/js/checkout.js",
+            "filename" => "assets/js/checkout.js",
+            "function" => "submitOrder",
+            "lineno" => 108,
+            "in_app" => true
+          }
+        ])
+        |> normalize_payload(project)
+
+      assert first.issue_id == second.issue_id
+      assert Grouping.fingerprint(first) == Grouping.fingerprint(second)
+    end
+
+    test "uses normalized messages when stacktrace is unavailable" do
+      project = project_fixture()
+
+      first =
+        "javascript.json"
+        |> fixture_payload()
+        |> Map.put("message", "Checkout failed for user 12345")
+        |> put_in(["exception", "values", Access.at(0), "stacktrace", "frames"], [])
+        |> normalize_payload(project)
+
+      second =
+        "javascript.json"
+        |> fixture_payload()
+        |> Map.put("event_id", "cdcdcdcdcdcdcdcdcdcdcdcdcdcdcdcd")
+        |> Map.put("message", "Checkout failed for user 98765")
+        |> put_in(["exception", "values", Access.at(0), "stacktrace", "frames"], [])
+        |> normalize_payload(project)
+
+      assert first.issue_id == second.issue_id
+      assert Grouping.fingerprint(first) == Grouping.fingerprint(second)
     end
 
     test "uses explicit SDK fingerprint when present" do

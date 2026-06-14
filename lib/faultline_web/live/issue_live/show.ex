@@ -18,8 +18,9 @@ defmodule FaultlineWeb.IssueLive.Show do
      |> assign(:project, project)
      |> assign(:issue, issue)
      |> assign(:events, events)
+     |> assign(:selected_event, List.first(events))
      |> assign(:raw_event_payload, nil)
-     |> assign(:selected_event_id, nil)}
+     |> assign(:raw_event_event_id, nil)}
   end
 
   @impl true
@@ -38,8 +39,23 @@ defmodule FaultlineWeb.IssueLive.Show do
 
     {:noreply,
      socket
+     |> assign(:selected_event, event)
      |> assign(:raw_event_payload, event.raw_event.payload)
-     |> assign(:selected_event_id, event.id)}
+     |> assign(:raw_event_event_id, event.id)}
+  end
+
+  def handle_event("select_event", %{"id" => event_id}, socket) do
+    case find_event(socket.assigns.events, event_id) do
+      nil ->
+        {:noreply, socket}
+
+      event ->
+        {:noreply,
+         socket
+         |> assign(:selected_event, event)
+         |> assign(:raw_event_payload, nil)
+         |> assign(:raw_event_event_id, nil)}
+    end
   end
 
   @impl true
@@ -126,30 +142,75 @@ defmodule FaultlineWeb.IssueLive.Show do
           </div>
         </section>
 
-        <section class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(28rem,34rem)]">
-          <div id="issue-events" class="space-y-4">
+        <section class="grid gap-6 xl:grid-cols-[19rem_minmax(0,1fr)]">
+          <aside
+            id="issue-occurrences"
+            class="h-fit overflow-hidden rounded-lg border border-base-300 bg-base-100 shadow-sm"
+          >
+            <div class="border-b border-base-300 px-4 py-3">
+              <h2 class="text-sm font-semibold uppercase tracking-[0.14em] text-base-content/50">
+                Occurrences
+              </h2>
+              <p class="mt-1 text-xs text-base-content/50">
+                Latest {@events |> length()} shown
+              </p>
+            </div>
+
+            <div class="max-h-[42rem] overflow-auto">
+              <p :if={@events == []} class="p-4 text-sm text-base-content/60">
+                No events yet.
+              </p>
+              <button
+                :for={event <- @events}
+                id={"select-event-#{event.id}"}
+                type="button"
+                phx-click="select_event"
+                phx-value-id={event.id}
+                class={[
+                  "block w-full border-b border-base-300 px-4 py-3 text-left transition last:border-b-0 hover:bg-base-200",
+                  selected_event?(@selected_event, event) && "bg-base-200",
+                  !selected_event?(@selected_event, event) && "bg-base-100"
+                ]}
+              >
+                <span class="block truncate font-mono text-[0.7rem] text-base-content/45">
+                  {event.event_id}
+                </span>
+                <span class="mt-1 block text-sm font-semibold leading-5 text-base-content">
+                  {occurrence_title(event)}
+                </span>
+                <span class="mt-1 block text-xs text-base-content/55">
+                  {event.release || "unknown release"}
+                </span>
+                <span class="mt-1 flex items-center justify-between gap-2 text-xs text-base-content/55">
+                  <span>{event.environment || "unknown env"}</span>
+                  <span>{format_time(event.occurred_at)}</span>
+                </span>
+              </button>
+            </div>
+          </aside>
+
+          <div id="selected-event-detail" class="space-y-4">
             <article
-              :for={event <- @events}
-              id={"issue-event-#{event.id}"}
+              :if={@selected_event}
+              id={"issue-event-#{@selected_event.id}"}
               class="overflow-hidden rounded-lg border border-base-300 bg-base-100 shadow-sm"
             >
               <div class="flex flex-col gap-3 border-b border-base-300 p-5 lg:flex-row lg:items-start lg:justify-between">
                 <div class="min-w-0">
-                  <p class="font-mono text-xs text-base-content/50">{event.event_id}</p>
+                  <p class="font-mono text-xs text-base-content/50">{@selected_event.event_id}</p>
                   <h2 class="mt-1 text-lg font-semibold leading-7 text-base-content">
-                    {event.message || event.exception_value || "Event"}
+                    {@selected_event.message || @selected_event.exception_value || "Event"}
                   </h2>
                   <p class="mt-1 text-sm text-base-content/60">
-                    {event.platform || "unknown"} &middot; {event.level || "unknown"} &middot; {format_time(
-                      event.occurred_at
-                    )}
+                    {@selected_event.platform || "unknown"} &middot; {@selected_event.level ||
+                      "unknown"} &middot; {format_time(@selected_event.occurred_at)}
                   </p>
                 </div>
                 <button
-                  id={"load-raw-event-#{event.id}"}
+                  id={"load-raw-event-#{@selected_event.id}"}
                   type="button"
                   phx-click="load_raw"
-                  phx-value-id={event.id}
+                  phx-value-id={@selected_event.id}
                   class="inline-flex w-fit shrink-0 items-center gap-2 rounded-lg border border-base-300 px-3 py-2 text-sm font-semibold text-base-content/70 transition hover:-translate-y-0.5 hover:border-base-content/30 hover:bg-base-200 hover:text-base-content"
                 >
                   <.icon name="hero-code-bracket" class="size-4" /> Raw JSON
@@ -158,49 +219,49 @@ defmodule FaultlineWeb.IssueLive.Show do
 
               <div class="grid gap-5 p-5">
                 <dl class="grid gap-x-5 gap-y-3 text-sm sm:grid-cols-2">
-                  <.kv label="Exception" value={compact_exception(event)} />
-                  <.kv label="Culprit" value={event.culprit} />
-                  <.kv label="Release" value={event.release} />
-                  <.kv label="Environment" value={event.environment} />
-                  <.kv label="Server" value={event.server_name} />
-                  <.kv label="User" value={event.user_identifier} />
-                  <.kv label="Request" value={event.request_url} />
+                  <.kv label="Exception" value={compact_exception(@selected_event)} />
+                  <.kv label="Culprit" value={@selected_event.culprit} />
+                  <.kv label="Release" value={@selected_event.release} />
+                  <.kv label="Environment" value={@selected_event.environment} />
+                  <.kv label="Server" value={@selected_event.server_name} />
+                  <.kv label="User" value={@selected_event.user_identifier} />
+                  <.kv label="Request" value={@selected_event.request_url} />
                 </dl>
 
                 <div class="grid gap-5 border-t border-base-300 pt-5">
                   <div class="grid gap-5 lg:grid-cols-2">
-                    <.map_section title="Tags" values={event.details["tags"] || %{}} />
-                    <.breadcrumbs values={event.details["breadcrumbs"] || []} />
+                    <.map_section title="Tags" values={@selected_event.details["tags"] || %{}} />
+                    <.breadcrumbs values={@selected_event.details["breadcrumbs"] || []} />
                   </div>
                   <.stacktrace frames={
-                    get_in(event.details, ["exception", "stacktrace_frames"]) || []
+                    get_in(@selected_event.details, ["exception", "stacktrace_frames"]) || []
                   } />
                 </div>
               </div>
             </article>
-          </div>
 
-          <aside
-            id="raw-event-panel"
-            class="h-fit overflow-hidden rounded-lg border border-base-300 bg-base-100 shadow-sm"
-          >
-            <div class="flex items-center justify-between gap-3 border-b border-base-300 px-4 py-3">
-              <h2 class="text-sm font-semibold uppercase tracking-[0.14em] text-base-content/50">
-                Raw event
-              </h2>
-              <span :if={@selected_event_id} class="font-mono text-xs text-base-content/45">
-                #{@selected_event_id}
-              </span>
-            </div>
-            <pre
-              :if={@raw_event_payload}
-              id="raw-event-json"
-              class="json-view max-h-[44rem] overflow-auto bg-base-200 p-4 text-xs leading-5"
-            ><code phx-no-curly-interpolation><%= raw(json_html(@raw_event_payload)) %></code></pre>
-            <p :if={!@raw_event_payload} class="p-4 text-sm leading-6 text-base-content/60">
-              Select an event to load its raw SDK payload.
-            </p>
-          </aside>
+            <aside
+              id="raw-event-panel"
+              class="overflow-hidden rounded-lg border border-base-300 bg-base-100 shadow-sm"
+            >
+              <div class="flex items-center justify-between gap-3 border-b border-base-300 px-4 py-3">
+                <h2 class="text-sm font-semibold uppercase tracking-[0.14em] text-base-content/50">
+                  Raw event
+                </h2>
+                <span :if={@raw_event_event_id} class="font-mono text-xs text-base-content/45">
+                  #{@raw_event_event_id}
+                </span>
+              </div>
+              <pre
+                :if={@raw_event_payload}
+                id="raw-event-json"
+                class="json-view max-h-[34rem] overflow-auto bg-base-200 p-4 text-xs leading-5"
+              ><code phx-no-curly-interpolation><%= raw(json_html(@raw_event_payload)) %></code></pre>
+              <p :if={!@raw_event_payload} class="p-4 text-sm leading-6 text-base-content/60">
+                Load raw JSON for the selected occurrence.
+              </p>
+            </aside>
+          </div>
         </section>
       </div>
     </Layouts.app>
@@ -302,6 +363,21 @@ defmodule FaultlineWeb.IssueLive.Show do
       </div>
     </section>
     """
+  end
+
+  defp find_event(events, event_id) do
+    with {id, ""} <- Integer.parse(event_id) do
+      Enum.find(events, &(&1.id == id))
+    else
+      _ -> nil
+    end
+  end
+
+  defp selected_event?(%{id: selected_id}, %{id: event_id}), do: selected_id == event_id
+  defp selected_event?(_selected_event, _event), do: false
+
+  defp occurrence_title(event) do
+    compact_exception(event) || event.message || "Event"
   end
 
   defp compact_exception(event) do

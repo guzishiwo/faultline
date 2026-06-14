@@ -31,7 +31,8 @@ defmodule FaultlineWeb.IssueLiveTest do
           "event_id" => String.pad_leading(Integer.to_string(index), 32, "0"),
           "culprit" => "checkout.step.#{index}",
           "timestamp" =>
-            "2026-06-14T15:#{String.pad_leading(Integer.to_string(index), 2, "0")}:00Z"
+            "2026-06-14T15:#{String.pad_leading(Integer.to_string(index), 2, "0")}:00Z",
+          "exception" => distinct_exception(index)
         })
       end
 
@@ -62,14 +63,29 @@ defmodule FaultlineWeb.IssueLiveTest do
 
   test "shows issue details, updates status, and loads raw event JSON", %{conn: conn} do
     project = project_fixture()
-    event = event_fixture(project, "javascript.json")
 
-    {:ok, view, _html} = live(conn, ~p"/projects/#{project.id}/issues/#{event.issue_id}")
+    older_event =
+      event_fixture(project, "javascript.json", %{
+        "timestamp" => "2026-06-14T15:00:00Z",
+        "release" => "web@1.2.3"
+      })
+
+    newer_event =
+      event_fixture(project, "javascript.json", %{
+        "event_id" => "99999999999999999999999999999999",
+        "timestamp" => "2026-06-14T15:05:00Z",
+        "release" => "web@2.0.0"
+      })
+
+    {:ok, view, _html} = live(conn, ~p"/projects/#{project.id}/issues/#{older_event.issue_id}")
 
     assert has_element?(view, "#issue-status", "unresolved")
-    assert has_element?(view, "#issue-event-#{event.id}")
+    assert has_element?(view, "#issue-occurrences")
+    assert has_element?(view, "#select-event-#{older_event.id}")
+    assert has_element?(view, "#select-event-#{newer_event.id}")
+    assert has_element?(view, "#issue-event-#{newer_event.id}")
     assert has_element?(view, "#stack-frame-1")
-    assert has_element?(view, "#load-raw-event-#{event.id}")
+    assert has_element?(view, "#load-raw-event-#{newer_event.id}")
 
     view
     |> element("#set-status-resolved")
@@ -78,12 +94,26 @@ defmodule FaultlineWeb.IssueLiveTest do
     assert has_element?(view, "#issue-status", "resolved")
 
     view
-    |> element("#load-raw-event-#{event.id}")
+    |> element("#select-event-#{older_event.id}")
+    |> render_click()
+
+    assert has_element?(view, "#issue-event-#{older_event.id}")
+    assert has_element?(view, "#issue-event-#{older_event.id}", "web@1.2.3")
+
+    view
+    |> element("#load-raw-event-#{older_event.id}")
     |> render_click()
 
     assert has_element?(view, "#raw-event-json")
     assert has_element?(view, "#raw-event-json .json-key")
     assert has_element?(view, "#raw-event-json .json-string")
+
+    view
+    |> element("#select-event-#{newer_event.id}")
+    |> render_click()
+
+    assert has_element?(view, "#issue-event-#{newer_event.id}")
+    refute has_element?(view, "#raw-event-json")
   end
 
   test "project list links to issue triage", %{conn: conn} do
@@ -122,6 +152,27 @@ defmodule FaultlineWeb.IssueLiveTest do
     |> Path.join(filename)
     |> File.read!()
     |> Jason.decode!()
+  end
+
+  defp distinct_exception(index) do
+    %{
+      "values" => [
+        %{
+          "type" => "TypeError",
+          "value" => "Cannot read properties of undefined",
+          "stacktrace" => %{
+            "frames" => [
+              %{
+                "filename" => "assets/js/checkout_#{index}.js",
+                "function" => "submitOrder#{index}",
+                "lineno" => 42,
+                "in_app" => true
+              }
+            ]
+          }
+        }
+      ]
+    }
   end
 
   defp project_fixture do
