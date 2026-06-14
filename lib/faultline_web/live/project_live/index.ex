@@ -67,34 +67,81 @@ defmodule FaultlineWeb.ProjectLive.Index do
             <article
               :for={{id, project} <- @streams.projects}
               id={id}
-              class="grid gap-5 px-5 py-5 transition hover:bg-base-200/60 lg:grid-cols-[minmax(12rem,18rem)_minmax(0,1fr)_12rem]"
+              class="grid gap-5 px-5 py-5 transition hover:bg-base-200/60 lg:grid-cols-[minmax(0,1fr)_18rem]"
             >
-              <div class="min-w-0">
-                <p class="truncate text-base font-semibold text-base-content">{project.name}</p>
-                <p class="mt-1 font-mono text-xs text-base-content/50">{project.slug}</p>
+              <div class="min-w-0 space-y-4">
+                <div class="min-w-0">
+                  <.link
+                    id={"project-open-link-#{project.id}"}
+                    navigate={~p"/projects/#{project.id}/issues"}
+                    class="group inline-flex max-w-full items-center gap-2"
+                  >
+                    <span class="truncate text-lg font-semibold text-base-content group-hover:text-orange-600">
+                      {project.name}
+                    </span>
+                    <.icon
+                      name="hero-arrow-right"
+                      class="size-4 shrink-0 text-base-content/40 group-hover:text-orange-600"
+                    />
+                  </.link>
+                  <p class="mt-1 font-mono text-xs text-base-content/50">{project.slug}</p>
+                </div>
+
+                <div class="grid gap-3 sm:grid-cols-2">
+                  <div class="rounded-lg border border-base-300 bg-base-200/70 px-3 py-2">
+                    <p class="text-xs font-semibold uppercase tracking-[0.14em] text-base-content/50">
+                      Ingest limit
+                    </p>
+                    <p class="mt-1 text-sm text-base-content/70">
+                      <span class="font-semibold text-base-content">
+                        {project.rate_limit_max_events}
+                      </span>
+                      events per {project.rate_limit_window_seconds}s
+                    </p>
+                  </div>
+
+                  <details class="group rounded-lg border border-base-300 bg-base-200/70 px-3 py-2">
+                    <summary
+                      id={"project-dsn-summary-#{project.id}"}
+                      class="flex cursor-pointer list-none items-center justify-between gap-3"
+                    >
+                      <span class="min-w-0">
+                        <span class="block text-xs font-semibold uppercase tracking-[0.14em] text-base-content/50">
+                          DSN
+                        </span>
+                        <span class="mt-1 block truncate font-mono text-xs text-base-content/70">
+                          {dsn_summary(project.dsn)}
+                        </span>
+                      </span>
+                      <.icon
+                        name="hero-chevron-down"
+                        class="size-4 shrink-0 text-base-content/40 transition group-open:rotate-180"
+                      />
+                    </summary>
+                    <code
+                      id={"project-dsn-#{project.id}"}
+                      class="mt-3 block max-h-24 overflow-auto rounded-md border border-base-300 bg-base-100 px-3 py-2 font-mono text-xs text-base-content"
+                    >
+                      {project.dsn}
+                    </code>
+                  </details>
+                </div>
               </div>
 
-              <div class="min-w-0">
-                <label class="text-xs font-semibold uppercase tracking-[0.14em] text-base-content/50">
-                  DSN
-                </label>
-                <code class="mt-2 block overflow-x-auto rounded-md border border-base-300 bg-base-200 px-3 py-2 font-mono text-xs text-base-content">
-                  {project.dsn}
-                </code>
-              </div>
-
-              <div class="flex flex-col justify-center gap-1 text-sm text-base-content/70">
-                <p>
-                  <span class="font-semibold text-base-content">{project.rate_limit_max_events}</span>
-                  events
-                </p>
-                <p>per {project.rate_limit_window_seconds}s</p>
+              <div class="flex flex-col justify-center gap-2">
                 <.link
                   id={"project-issues-link-#{project.id}"}
                   navigate={~p"/projects/#{project.id}/issues"}
-                  class="mt-2 inline-flex items-center gap-1 font-semibold text-base-content transition hover:text-orange-600"
+                  class="inline-flex items-center justify-center gap-2 rounded-lg bg-base-content px-4 py-2.5 text-sm font-semibold text-base-100 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
                 >
-                  Issues <.icon name="hero-arrow-right" class="size-3" />
+                  Open triage <.icon name="hero-arrow-right" class="size-4" />
+                </.link>
+                <.link
+                  id={"project-alerts-link-#{project.id}"}
+                  navigate={~p"/projects/#{project.id}/alerts"}
+                  class="inline-flex items-center justify-center gap-2 rounded-lg border border-base-300 px-4 py-2.5 text-sm font-semibold text-base-content/70 transition hover:bg-base-200 hover:text-base-content"
+                >
+                  Alerts <.icon name="hero-bell-alert" class="size-4" />
                 </.link>
               </div>
             </article>
@@ -103,5 +150,15 @@ defmodule FaultlineWeb.ProjectLive.Index do
       </div>
     </Layouts.app>
     """
+  end
+
+  defp dsn_summary(dsn) do
+    case URI.parse(dsn) do
+      %URI{host: host, path: path} when is_binary(host) and is_binary(path) ->
+        "#{host}#{path}"
+
+      _uri ->
+        dsn
+    end
   end
 end

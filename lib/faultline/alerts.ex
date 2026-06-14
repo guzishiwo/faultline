@@ -60,6 +60,11 @@ defmodule Faultline.Alerts do
   Updates an alert rule.
   """
   def update_alert_rule(%AlertRule{} = alert_rule, attrs) do
+    attrs =
+      attrs
+      |> Map.new()
+      |> Map.put("project_id", alert_rule.project_id)
+
     alert_rule
     |> AlertRule.changeset(attrs)
     |> Repo.update()

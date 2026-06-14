@@ -33,7 +33,11 @@ defmodule FaultlineWeb.ProjectLiveTest do
     project = Repo.one!(Project)
 
     assert has_element?(index_view, "#projects-#{project.id}")
-    assert has_element?(index_view, "#projects-#{project.id} code")
+    assert has_element?(index_view, "#project-open-link-#{project.id}")
+    assert has_element?(index_view, "#project-dsn-summary-#{project.id}")
+    assert has_element?(index_view, "#project-dsn-#{project.id}")
+    assert has_element?(index_view, "#project-issues-link-#{project.id}")
+    assert has_element?(index_view, "#project-alerts-link-#{project.id}")
   end
 
   test "validates the project form", %{conn: conn} do
