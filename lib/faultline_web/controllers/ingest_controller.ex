@@ -13,8 +13,11 @@ defmodule FaultlineWeb.IngestController do
   end
 
   def envelope(conn, %{"project_id" => project_id}) do
+    max_bytes = max_envelope_bytes()
+
     with {:ok, project, auth} <- Ingest.authorize_project(project_id, conn),
-         {:ok, body, conn} <- read_full_body(conn, max_envelope_bytes()),
+         {:ok, raw_body, conn} <- read_full_body(conn, max_bytes),
+         {:ok, body} <- decode_body(conn, raw_body, max_bytes),
          {:ok, _raw_events} <- Ingest.accept_envelope(project, body, auth) do
       json(conn, %{})
     else
@@ -83,6 +86,33 @@ defmodule FaultlineWeb.IngestController do
     else
       {:ok, acc, conn}
     end
+  end
+
+  defp decode_body(conn, body, max_bytes) do
+    case content_encoding(conn) do
+      "identity" -> {:ok, body}
+      "gzip" -> gunzip_body(body, max_bytes)
+      _unsupported -> {:error, :invalid_payload}
+    end
+  end
+
+  defp content_encoding(conn) do
+    case get_req_header(conn, "content-encoding") do
+      [] -> "identity"
+      [encoding | _] -> encoding |> String.trim() |> String.downcase()
+    end
+  end
+
+  defp gunzip_body(body, max_bytes) do
+    inflated = :zlib.gunzip(body)
+
+    if byte_size(inflated) > max_bytes do
+      {:error, :payload_too_large}
+    else
+      {:ok, inflated}
+    end
+  rescue
+    ErlangError -> {:error, :invalid_payload}
   end
 
   defp max_envelope_bytes do

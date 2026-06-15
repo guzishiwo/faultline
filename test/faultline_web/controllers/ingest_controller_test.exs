@@ -52,6 +52,33 @@ defmodule FaultlineWeb.IngestControllerTest do
     assert raw_event.payload["message"] == "Envelope fixture exception"
   end
 
+  test "POST /api/:project_id/envelope/ accepts gzip-compressed SDK request bodies", %{
+    conn: conn
+  } do
+    project = project_fixture("Gzip envelope service")
+
+    body =
+      @fixtures
+      |> Path.join("envelope_event.txt")
+      |> File.read!()
+      |> :zlib.gzip()
+
+    conn =
+      conn
+      |> put_req_header("content-type", "application/x-sentry-envelope")
+      |> put_req_header("content-encoding", "gzip")
+      |> put_req_header("x-sentry-auth", sentry_auth_header(project))
+      |> post(~p"/api/#{project.project_number}/envelope/", body)
+
+    assert json_response(conn, 200) == %{}
+
+    raw_event = Repo.one!(RawEvent)
+    assert raw_event.project_id == project.id
+    assert raw_event.event_id == "22222222222222222222222222222222"
+    assert raw_event.source == "envelope"
+    assert raw_event.payload["message"] == "Envelope fixture exception"
+  end
+
   test "rejects invalid auth", %{conn: conn} do
     project = project_fixture("Auth service")
     body = File.read!(Path.join(@fixtures, "store_event.json"))

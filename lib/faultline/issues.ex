@@ -82,22 +82,25 @@ defmodule Faultline.Issues do
     end
   end
 
-  def list_project_issues(project_id) do
-    Issue
-    |> where([issue], issue.project_id == ^project_id)
-    |> order_by([issue], desc: issue.last_seen_at, desc: issue.id)
+  def list_project_issues(project_id, opts \\ []) do
+    project_id
+    |> project_issues_query()
+    |> search_issues(Keyword.get(opts, :search))
+    |> order_issues()
     |> Repo.all()
   end
 
   def paginate_project_issues(project_id, opts \\ []) do
     limit = Keyword.get(opts, :limit, @default_page_size)
     cursor = Keyword.get(opts, :after)
+    search = Keyword.get(opts, :search)
 
     issues =
-      Issue
-      |> where([issue], issue.project_id == ^project_id)
+      project_id
+      |> project_issues_query()
+      |> search_issues(search)
       |> after_cursor(cursor)
-      |> order_by([issue], desc: issue.last_seen_at, desc: issue.id)
+      |> order_issues()
       |> limit(^(limit + 1))
       |> Repo.all()
 
@@ -120,6 +123,17 @@ defmodule Faultline.Issues do
   def broadcast_issue_change(%Issue{} = issue) do
     Phoenix.PubSub.broadcast(Faultline.PubSub, topic(issue.project_id), {:issue_changed, issue})
   end
+
+  def issue_matches_search?(%Issue{} = issue, search) when is_binary(search) do
+    search = search |> String.trim() |> String.downcase()
+
+    search == "" or
+      [issue.title, issue.fingerprint]
+      |> Enum.reject(&is_nil/1)
+      |> Enum.any?(&(String.downcase(&1) |> String.contains?(search)))
+  end
+
+  def issue_matches_search?(%Issue{}, _search), do: true
 
   defp create_issue!(repo, event, fingerprint) do
     %Issue{}
@@ -173,6 +187,40 @@ defmodule Faultline.Issues do
 
   defp max_datetime(first, second) do
     if DateTime.compare(first, second) == :lt, do: second, else: first
+  end
+
+  defp project_issues_query(project_id) do
+    where(Issue, [issue], issue.project_id == ^project_id)
+  end
+
+  defp search_issues(query, nil), do: query
+
+  defp search_issues(query, search) when is_binary(search) do
+    case String.trim(search) do
+      "" ->
+        query
+
+      search ->
+        pattern = "%#{escape_like(search)}%"
+
+        where(
+          query,
+          [issue],
+          fragment("? ILIKE ? ESCAPE '\\'", issue.title, ^pattern) or
+            fragment("? ILIKE ? ESCAPE '\\'", issue.fingerprint, ^pattern)
+        )
+    end
+  end
+
+  defp order_issues(query) do
+    order_by(query, [issue], desc: issue.last_seen_at, desc: issue.id)
+  end
+
+  defp escape_like(search) do
+    search
+    |> String.replace("\\", "\\\\")
+    |> String.replace("%", "\\%")
+    |> String.replace("_", "\\_")
   end
 
   defp after_cursor(query, nil), do: query

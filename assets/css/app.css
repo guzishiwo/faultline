@@ -104,40 +104,58 @@
 
 /* This file is for your main application CSS */
 
-.json-view {
-  color: color-mix(in oklch, var(--color-base-content) 82%, transparent);
-  scrollbar-color: color-mix(in oklch, var(--color-base-content) 35%, transparent) transparent;
+.stacktrace-list {
+  scrollbar-color: color-mix(in oklch, var(--color-base-content) 28%, transparent) transparent;
 }
 
-.json-view code {
-  display: block;
-  min-width: 100%;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
+.stacktrace-list code[class*="language-"],
+.stacktrace-list pre[class*="language-"] {
+  color: color-mix(in oklch, var(--color-base-content) 78%, transparent);
+  text-shadow: none;
   tab-size: 2;
 }
 
-.json-view .json-key {
-  color: var(--color-info);
+.stacktrace-list .token.comment,
+.stacktrace-list .token.prolog,
+.stacktrace-list .token.doctype,
+.stacktrace-list .token.cdata {
+  color: color-mix(in oklch, var(--color-base-content) 45%, transparent);
 }
 
-.json-view .json-string {
-  color: var(--color-success);
+.stacktrace-list .token.punctuation,
+.stacktrace-list .token.operator {
+  color: color-mix(in oklch, var(--color-base-content) 58%, transparent);
 }
 
-.json-view .json-number {
-  color: var(--color-warning);
-}
-
-.json-view .json-boolean,
-.json-view .json-null {
+.stacktrace-list .token.keyword,
+.stacktrace-list .token.selector,
+.stacktrace-list .token.atrule {
   color: var(--color-error);
 }
 
-.json-view .json-punctuation {
-  color: color-mix(in oklch, var(--color-base-content) 48%, transparent);
+.stacktrace-list .token.string,
+.stacktrace-list .token.char,
+.stacktrace-list .token.attr-value,
+.stacktrace-list .token.regex {
+  color: var(--color-success);
 }
 
-.stacktrace-list {
-  scrollbar-color: color-mix(in oklch, var(--color-base-content) 28%, transparent) transparent;
+.stacktrace-list .token.function,
+.stacktrace-list .token.method,
+.stacktrace-list .token.class-name {
+  color: var(--color-info);
+}
+
+.stacktrace-list .token.number,
+.stacktrace-list .token.boolean,
+.stacktrace-list .token.constant,
+.stacktrace-list .token.symbol {
+  color: var(--color-warning);
+}
+
+.stacktrace-list .token.property,
+.stacktrace-list .token.attr-name,
+.stacktrace-list .token.variable,
+.stacktrace-list .token.builtin {
+  color: var(--color-primary);
 }

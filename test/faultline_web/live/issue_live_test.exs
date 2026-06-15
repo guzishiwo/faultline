@@ -5,6 +5,7 @@ defmodule FaultlineWeb.IssueLiveTest do
 
   alias Faultline.Events
   alias Faultline.Ingest.RawEvent
+  alias Faultline.Issues.Issue
   alias Faultline.Projects
   alias Faultline.Repo
 
@@ -50,6 +51,44 @@ defmodule FaultlineWeb.IssueLiveTest do
     assert has_element?(view, "#issues-#{oldest_event.issue_id}")
   end
 
+  test "searches issues by title", %{conn: conn} do
+    project = project_fixture()
+
+    target_event =
+      event_fixture(project, "javascript.json", %{
+        "event_id" => "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "exception" => distinct_exception(1, "Checkout search target")
+      })
+
+    other_event =
+      event_fixture(project, "javascript.json", %{
+        "event_id" => "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "exception" => distinct_exception(2, "Background worker failed")
+      })
+
+    target_issue = Repo.get!(Issue, target_event.issue_id)
+
+    {:ok, view, _html} = live(conn, ~p"/p/#{project.slug}/issues")
+
+    assert has_element?(view, "#issue-search-form")
+    assert has_element?(view, "#issues-#{target_event.issue_id}")
+    assert has_element?(view, "#issues-#{other_event.issue_id}")
+
+    view
+    |> element("#issue-search-form")
+    |> render_change(%{"search" => %{"q" => target_issue.title}})
+
+    assert has_element?(view, "#issues-#{target_event.issue_id}")
+    refute has_element?(view, "#issues-#{other_event.issue_id}")
+
+    view
+    |> element("#clear-issue-search")
+    |> render_click()
+
+    assert has_element?(view, "#issues-#{target_event.issue_id}")
+    assert has_element?(view, "#issues-#{other_event.issue_id}")
+  end
+
   test "inserts new issues through PubSub", %{conn: conn} do
     project = project_fixture()
     {:ok, view, _html} = live(conn, ~p"/p/#{project.slug}/issues")
@@ -75,6 +114,7 @@ defmodule FaultlineWeb.IssueLiveTest do
         "event_id" => "99999999999999999999999999999999",
         "timestamp" => "2026-06-14T15:05:00Z",
         "release" => "web@2.0.0",
+        "exception" => source_context_exception(),
         "contexts" => smoke_contexts(),
         "sdk" => smoke_sdk(),
         "modules" => %{"@sentry/node" => "^10.57.0"}
@@ -103,6 +143,13 @@ defmodule FaultlineWeb.IssueLiveTest do
     assert has_element?(view, "#event-context-runtime", "node")
     assert has_element?(view, "#event-context-device", "Apple M3 Pro")
     assert has_element?(view, "#event-context-trace", "ab08bb5f21f04795ad26d8d3f919379d")
+    assert has_element?(view, "#stack-frame-1-source", "const amount = cart.total")
+    assert has_element?(view, "#stack-frame-1-source", "throw new TypeError")
+    assert has_element?(view, "#stack-frame-1-source", "return charge")
+    assert has_element?(view, "#stack-frame-1-source code[phx-hook='CodeHighlight']")
+    assert has_element?(view, "#stack-frame-1-source code[data-prism-language='javascript']")
+    assert has_element?(view, "#stack-frame-1-var-cart", "cart-123")
+    assert has_element?(view, "#stack-frame-1-var-amount", "149.99")
     assert has_element?(view, "#event-modules", "@sentry/node")
     assert has_element?(view, "#event-sdk", "sentry.javascript.node")
     assert has_element?(view, "#load-raw-event-#{newer_event.id}")
@@ -125,8 +172,9 @@ defmodule FaultlineWeb.IssueLiveTest do
     |> render_click()
 
     assert has_element?(view, "#raw-event-json")
-    assert has_element?(view, "#raw-event-json .json-key")
-    assert has_element?(view, "#raw-event-json .json-string")
+    assert has_element?(view, "#raw-event-json code[phx-hook='CodeHighlight']")
+    assert has_element?(view, "#raw-event-json code[data-prism-language='json']")
+    assert has_element?(view, "#raw-event-json", "web@1.2.3")
 
     view
     |> element("#select-event-#{newer_event.id}")
@@ -134,6 +182,25 @@ defmodule FaultlineWeb.IssueLiveTest do
 
     assert has_element?(view, "#issue-event-#{newer_event.id}")
     refute has_element?(view, "#raw-event-json")
+  end
+
+  test "marks source frames with common Sentry SDK languages", %{conn: conn} do
+    project = project_fixture()
+
+    event =
+      event_fixture(project, "javascript.json", %{
+        "exception" => source_context_exception(common_source_languages())
+      })
+
+    {:ok, view, _html} = live(conn, ~p"/p/#{project.slug}/issues/#{event.issue_id}")
+
+    for {index, {_filename, language}} <-
+          Enum.with_index(Enum.reverse(common_source_languages()), 1) do
+      assert has_element?(
+               view,
+               "#stack-frame-#{index}-source code[data-prism-language='#{language}']"
+             )
+    end
   end
 
   test "project list links to issue triage", %{conn: conn} do
@@ -175,12 +242,12 @@ defmodule FaultlineWeb.IssueLiveTest do
     |> Jason.decode!()
   end
 
-  defp distinct_exception(index) do
+  defp distinct_exception(index, value \\ "Cannot read properties of undefined") do
     %{
       "values" => [
         %{
           "type" => "TypeError",
-          "value" => "Cannot read properties of undefined",
+          "value" => value,
           "stacktrace" => %{
             "frames" => [
               %{
@@ -194,6 +261,72 @@ defmodule FaultlineWeb.IssueLiveTest do
         }
       ]
     }
+  end
+
+  defp source_context_exception do
+    source_context_exception([{"app.js", "javascript"}])
+  end
+
+  defp source_context_exception(frames) do
+    %{
+      "values" => [
+        %{
+          "type" => "TypeError",
+          "value" => "Cannot read properties of undefined",
+          "stacktrace" => %{
+            "frames" => Enum.map(frames, &source_context_frame/1)
+          }
+        }
+      ]
+    }
+  end
+
+  defp source_context_frame({filename, _language}) do
+    %{
+      "filename" => filename,
+      "function" => "submitOrder",
+      "lineno" => 42,
+      "colno" => 13,
+      "pre_context" => [
+        "const amount = cart.total",
+        "const charge = createCharge(amount)",
+        "",
+        "try {"
+      ],
+      "context_line" => "  throw new TypeError(\"Cannot read properties of undefined\")",
+      "post_context" => [
+        "} finally {",
+        "  return charge",
+        "}"
+      ],
+      "vars" => %{
+        "amount" => "149.99",
+        "cart" => "{id: \"cart-123\", items: 3}"
+      }
+    }
+  end
+
+  defp common_source_languages do
+    [
+      {"app.ts", "typescript"},
+      {"App.jsx", "jsx"},
+      {"Screen.tsx", "tsx"},
+      {"worker.py", "python"},
+      {"job.rb", "ruby"},
+      {"index.php", "php"},
+      {"Checkout.java", "java"},
+      {"Checkout.kt", "kotlin"},
+      {"Program.cs", "csharp"},
+      {"main.go", "go"},
+      {"lib.rs", "rust"},
+      {"App.swift", "swift"},
+      {"ViewController.m", "objectivec"},
+      {"main.dart", "dart"},
+      {"native.c", "c"},
+      {"addon.cpp", "cpp"},
+      {"worker.ex", "elixir"},
+      {"event.json", "json"}
+    ]
   end
 
   defp smoke_contexts do

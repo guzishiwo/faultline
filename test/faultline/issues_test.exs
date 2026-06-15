@@ -226,6 +226,34 @@ defmodule Faultline.IssuesTest do
 
       assert [^newer_issue, ^older_issue] = Issues.list_project_issues(project.id)
     end
+
+    test "searches project issues by title" do
+      project = project_fixture()
+
+      target =
+        "javascript.json"
+        |> fixture_payload()
+        |> put_in(["exception", "values", Access.at(0), "value"], "Checkout search target")
+        |> normalize_payload(project)
+
+      other =
+        "ruby.json"
+        |> fixture_payload()
+        |> put_in(["exception", "values", Access.at(0), "value"], "Background worker failed")
+        |> normalize_payload(project)
+
+      target_issue = Repo.get!(Issue, target.issue_id)
+      other_issue = Repo.get!(Issue, other.issue_id)
+
+      assert [^target_issue] = Issues.list_project_issues(project.id, search: "checkout search")
+      assert [^target_issue] = Issues.list_project_issues(project.id, search: "CHECKOUT SEARCH")
+
+      page = Issues.paginate_project_issues(project.id, search: "checkout search")
+      assert page.issues == [target_issue]
+      assert page.next_cursor == nil
+
+      refute other_issue in page.issues
+    end
   end
 
   defp normalize_payload(payload, project) do

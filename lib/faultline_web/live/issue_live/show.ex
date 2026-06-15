@@ -235,9 +235,10 @@ defmodule FaultlineWeb.IssueLive.Show do
                   </dl>
                 </section>
 
-                <.stacktrace frames={
-                  get_in(@selected_event.details, ["exception", "stacktrace_frames"]) || []
-                } />
+                <.stacktrace
+                  frames={get_in(@selected_event.details, ["exception", "stacktrace_frames"]) || []}
+                  event_id={@selected_event.id}
+                />
 
                 <section id="event-context" class="grid gap-5 border-t border-base-300 pt-5">
                   <h3 class="text-xs font-semibold uppercase tracking-[0.14em] text-base-content/50">
@@ -282,8 +283,14 @@ defmodule FaultlineWeb.IssueLive.Show do
               <pre
                 :if={@raw_event_payload}
                 id="raw-event-json"
-                class="json-view max-h-[34rem] overflow-auto bg-base-200 p-4 text-xs leading-5"
-              ><code phx-no-curly-interpolation><%= raw(json_html(@raw_event_payload)) %></code></pre>
+                class="max-h-[34rem] overflow-auto bg-base-200 p-4 text-xs leading-5 stacktrace-list"
+              ><code
+                  id={"raw-event-json-code-#{@raw_event_event_id}"}
+                  phx-hook="CodeHighlight"
+                  phx-update="ignore"
+                  data-prism-language="json"
+                  class="block min-w-full whitespace-pre-wrap break-words language-json"
+                >{raw_event_json(@raw_event_payload)}</code></pre>
               <p :if={!@raw_event_payload} class="p-4 text-sm leading-6 text-base-content/60">
                 Load raw JSON for the selected occurrence.
               </p>
@@ -381,6 +388,7 @@ defmodule FaultlineWeb.IssueLive.Show do
   end
 
   attr :frames, :list, required: true
+  attr :event_id, :string, required: true
 
   defp stacktrace(assigns) do
     ~H"""
@@ -413,16 +421,78 @@ defmodule FaultlineWeb.IssueLive.Show do
             <p class="mt-1 break-words font-mono text-xs leading-5 text-base-content/55">
               {frame_location(frame)}
             </p>
-            <p
-              :if={frame["context_line"]}
-              class="mt-2 rounded bg-base-100 px-3 py-2 font-mono text-xs text-base-content/70"
-            >
-              {frame["context_line"]}
-            </p>
+            <.frame_source frame={frame} index={index} event_id={@event_id} />
+            <.frame_vars frame={frame} index={index} />
           </div>
         </div>
       </div>
     </section>
+    """
+  end
+
+  attr :frame, :map, required: true
+  attr :index, :integer, required: true
+  attr :event_id, :string, required: true
+
+  defp frame_source(assigns) do
+    assigns =
+      assigns
+      |> assign(:lines, frame_source_lines(assigns.frame))
+      |> assign(:language, frame_language(assigns.frame))
+
+    ~H"""
+    <div
+      :if={@lines != []}
+      id={"stack-frame-#{@index}-source"}
+      class="mt-3 overflow-x-auto rounded-lg border border-base-300 bg-base-100"
+    >
+      <div
+        :for={line <- @lines}
+        id={"stack-frame-#{@index}-source-line-#{line.id}"}
+        class={[
+          "grid grid-cols-[3.5rem_minmax(0,1fr)] font-mono text-xs leading-6",
+          line.current? && "bg-orange-500/10 text-base-content",
+          !line.current? && "text-base-content/65"
+        ]}
+      >
+        <span class="select-none border-r border-base-300 px-3 text-right text-base-content/40">
+          {line.number}
+        </span>
+        <code
+          id={"stack-frame-#{@event_id}-#{@index}-source-line-#{line.id}-code"}
+          phx-hook={if(@language, do: "CodeHighlight")}
+          phx-update={if(@language, do: "ignore")}
+          data-prism-language={@language}
+          class={["min-w-max whitespace-pre px-3", @language && "language-#{@language}"]}
+        >{line.source}</code>
+      </div>
+    </div>
+    """
+  end
+
+  attr :frame, :map, required: true
+  attr :index, :integer, required: true
+
+  defp frame_vars(assigns) do
+    assigns = assign(assigns, :vars, frame_var_pairs(assigns.frame))
+
+    ~H"""
+    <div
+      :if={@vars != []}
+      id={"stack-frame-#{@index}-vars"}
+      class="mt-3 overflow-hidden rounded-lg border border-base-300 bg-base-100"
+    >
+      <div
+        :for={{name, value} <- @vars}
+        id={"stack-frame-#{@index}-var-#{dom_id_part(name)}"}
+        class="grid border-b border-base-300 text-xs last:border-b-0 sm:grid-cols-[10rem_minmax(0,1fr)]"
+      >
+        <span class="border-b border-base-300 px-3 py-2 font-mono font-semibold text-base-content/70 sm:border-b-0 sm:border-r">
+          {name}
+        </span>
+        <code class="break-words px-3 py-2 font-mono text-base-content/65">{format_detail(value)}</code>
+      </div>
+    </div>
     """
   end
 
@@ -641,93 +711,117 @@ defmodule FaultlineWeb.IssueLive.Show do
     end
   end
 
-  defp json_html(value) do
+  defp frame_source_lines(frame) do
+    pre_context = list_value(frame["pre_context"])
+    context_line = frame["context_line"]
+    post_context = list_value(frame["post_context"])
+
+    case {pre_context, context_line, post_context} do
+      {[], nil, []} ->
+        []
+
+      _ ->
+        current_line_number = integer_value(frame["lineno"])
+        first_line_number = first_source_line_number(current_line_number, length(pre_context))
+
+        pre_context
+        |> Enum.concat(List.wrap(context_line))
+        |> Enum.concat(post_context)
+        |> Enum.with_index()
+        |> Enum.map(fn {source, index} ->
+          source_line_number = source_line_number(first_line_number, index)
+
+          %{
+            id: index + 1,
+            number: source_line_number || "",
+            source: source,
+            current?: current_line_number != nil and source_line_number == current_line_number
+          }
+        end)
+    end
+  end
+
+  defp frame_var_pairs(%{"vars" => vars}) when is_map(vars) do
+    sorted_take(vars, 16)
+  end
+
+  defp frame_var_pairs(_frame), do: []
+
+  defp frame_language(frame) do
+    frame
+    |> frame_filename()
+    |> Path.extname()
+    |> String.downcase()
+    |> case do
+      ".py" -> "python"
+      ".pyw" -> "python"
+      ".js" -> "javascript"
+      ".mjs" -> "javascript"
+      ".cjs" -> "javascript"
+      ".jsx" -> "jsx"
+      ".ts" -> "typescript"
+      ".mts" -> "typescript"
+      ".cts" -> "typescript"
+      ".tsx" -> "tsx"
+      ".rb" -> "ruby"
+      ".php" -> "php"
+      ".java" -> "java"
+      ".kt" -> "kotlin"
+      ".kts" -> "kotlin"
+      ".cs" -> "csharp"
+      ".go" -> "go"
+      ".rs" -> "rust"
+      ".swift" -> "swift"
+      ".m" -> "objectivec"
+      ".mm" -> "objectivec"
+      ".dart" -> "dart"
+      ".c" -> "c"
+      ".h" -> "c"
+      ".cc" -> "cpp"
+      ".cpp" -> "cpp"
+      ".cxx" -> "cpp"
+      ".hpp" -> "cpp"
+      ".hh" -> "cpp"
+      ".hxx" -> "cpp"
+      ".ex" -> "elixir"
+      ".exs" -> "elixir"
+      ".json" -> "json"
+      _ -> nil
+    end
+  end
+
+  defp frame_filename(frame), do: frame["filename"] || frame["abs_path"] || ""
+
+  defp first_source_line_number(nil, _pre_context_count), do: nil
+
+  defp first_source_line_number(line_number, pre_context_count),
+    do: line_number - pre_context_count
+
+  defp source_line_number(nil, _index), do: nil
+  defp source_line_number(first_line_number, index), do: first_line_number + index
+
+  defp list_value(value) when is_list(value) do
+    Enum.filter(value, &is_binary/1)
+  end
+
+  defp list_value(_value), do: []
+
+  defp integer_value(value) when is_integer(value), do: value
+  defp integer_value(_value), do: nil
+
+  defp dom_id_part(value) do
     value
-    |> json_value(0)
-    |> IO.iodata_to_binary()
-  end
-
-  defp json_value(value, indent) when is_map(value) do
-    entries =
-      value
-      |> Enum.sort_by(fn {key, _value} -> to_string(key) end)
-
-    case entries do
-      [] ->
-        token("json-punctuation", "{}")
-
-      entries ->
-        [
-          token("json-punctuation", "{"),
-          "\n",
-          entries
-          |> Enum.map(fn {key, child} ->
-            [
-              indent(indent + 1),
-              json_string(to_string(key), "json-key"),
-              token("json-punctuation", ":"),
-              " ",
-              json_value(child, indent + 1)
-            ]
-          end)
-          |> join_with([token("json-punctuation", ","), "\n"]),
-          "\n",
-          indent(indent),
-          token("json-punctuation", "}")
-        ]
+    |> to_string()
+    |> String.downcase()
+    |> String.replace(~r/[^a-z0-9_-]+/, "-")
+    |> String.trim("-")
+    |> case do
+      "" -> "value"
+      value -> value
     end
   end
 
-  defp json_value(value, indent) when is_list(value) do
-    case value do
-      [] ->
-        token("json-punctuation", "[]")
-
-      values ->
-        [
-          token("json-punctuation", "["),
-          "\n",
-          values
-          |> Enum.map(fn child -> [indent(indent + 1), json_value(child, indent + 1)] end)
-          |> join_with([token("json-punctuation", ","), "\n"]),
-          "\n",
-          indent(indent),
-          token("json-punctuation", "]")
-        ]
-    end
-  end
-
-  defp json_value(value, _indent) when is_binary(value), do: json_string(value, "json-string")
-
-  defp json_value(value, _indent) when is_integer(value),
-    do: token("json-number", Integer.to_string(value))
-
-  defp json_value(value, _indent) when is_float(value),
-    do: token("json-number", Jason.encode!(value))
-
-  defp json_value(true, _indent), do: token("json-boolean", "true")
-  defp json_value(false, _indent), do: token("json-boolean", "false")
-  defp json_value(nil, _indent), do: token("json-null", "null")
-  defp json_value(value, indent), do: json_value(to_string(value), indent)
-
-  defp json_string(value, class) do
-    token(class, Jason.encode!(value))
-  end
-
-  defp token(class, value) do
-    escaped_value =
-      value
-      |> Phoenix.HTML.html_escape()
-      |> Phoenix.HTML.safe_to_string()
-
-    ["<span class=\"", class, "\">", escaped_value, "</span>"]
-  end
-
-  defp indent(level), do: String.duplicate("  ", level)
-
-  defp join_with([], _separator), do: []
-  defp join_with([item], _separator), do: item
-  defp join_with([item | rest], separator), do: [item, separator, join_with(rest, separator)]
+  defp raw_event_json(value), do: Jason.encode!(value, pretty: true)
 
   defp format_time(%DateTime{} = datetime), do: Calendar.strftime(datetime, "%Y-%m-%d %H:%M")
 end

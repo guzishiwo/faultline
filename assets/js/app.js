@@ -23,13 +23,55 @@ import "phoenix_html"
 import {Socket} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
 import {hooks as colocatedHooks} from "phoenix-colocated/faultline"
+import Prism from "prismjs"
+import "prismjs/components/prism-clike"
+import "prismjs/components/prism-markup"
+import "prismjs/components/prism-markup-templating"
+import "prismjs/components/prism-c"
+import "prismjs/components/prism-cpp"
+import "prismjs/components/prism-javascript"
+import "prismjs/components/prism-jsx"
+import "prismjs/components/prism-typescript"
+import "prismjs/components/prism-tsx"
+import "prismjs/components/prism-python"
+import "prismjs/components/prism-ruby"
+import "prismjs/components/prism-php"
+import "prismjs/components/prism-java"
+import "prismjs/components/prism-kotlin"
+import "prismjs/components/prism-csharp"
+import "prismjs/components/prism-go"
+import "prismjs/components/prism-rust"
+import "prismjs/components/prism-swift"
+import "prismjs/components/prism-objectivec"
+import "prismjs/components/prism-dart"
+import "prismjs/components/prism-elixir"
+import "prismjs/components/prism-json"
 import topbar from "../vendor/topbar"
+
+Prism.manual = true
+
+const CodeHighlight = {
+  mounted() {
+    this.highlight()
+  },
+  updated() {
+    this.highlight()
+  },
+  highlight() {
+    const language = this.el.dataset.prismLanguage
+    const grammar = Prism.languages[language]
+
+    if (!grammar) return
+
+    this.el.innerHTML = Prism.highlight(this.el.textContent, grammar, language)
+  },
+}
 
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 const liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
   params: {_csrf_token: csrfToken},
-  hooks: {...colocatedHooks},
+  hooks: {...colocatedHooks, CodeHighlight},
 })
 
 // Show progress bar on live navigation and form submits
@@ -80,4 +122,3 @@ if (process.env.NODE_ENV === "development") {
     window.liveReloader = reloader
   })
 }
-
