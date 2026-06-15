@@ -44,117 +44,119 @@
     </nav>
   </header>
 
-  <main class="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[minmax(0,1fr)_24rem] lg:px-8 lg:py-16">
-    <section class="space-y-8">
-      <div class="space-y-5">
-        <p class="text-sm font-semibold uppercase tracking-[0.18em] text-orange-600">
-          Sentry SDK compatible error tracking
-        </p>
-        <h1 class="max-w-4xl text-4xl font-semibold leading-tight tracking-normal sm:text-6xl">
-          Lightweight error triage for teams that do not want a heavy stack.
-        </h1>
-        <p class="max-w-2xl text-base leading-7 text-base-content/70 sm:text-lg">
-          Faultline keeps the ingest path simple, the UI realtime, and the infrastructure small: Phoenix, LiveView, and PostgreSQL first.
-        </p>
-      </div>
-
-      <div class="flex flex-wrap gap-3">
-        <.link
-          :if={@current_scope && @current_scope.user}
-          navigate={~p"/issues?project=-1"}
-          class="inline-flex items-center gap-2 rounded-lg bg-base-content px-4 py-2.5 text-sm font-semibold text-base-100 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-        >
-          <.icon name="hero-magnifying-glass" class="size-4" /> Open issues
-        </.link>
-        <.link
-          :if={!@current_scope || !@current_scope.user}
-          navigate={~p"/users/register"}
-          class="inline-flex items-center gap-2 rounded-lg bg-base-content px-4 py-2.5 text-sm font-semibold text-base-100 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-        >
-          <.icon name="hero-user-plus" class="size-4" /> Create account
-        </.link>
-        <.link
-          :if={!@current_scope || !@current_scope.user}
-          navigate={~p"/users/log-in"}
-          class="inline-flex items-center gap-2 rounded-lg border border-base-300 px-4 py-2.5 text-sm font-semibold transition hover:bg-base-200"
-        >
-          <.icon name="hero-arrow-right-on-rectangle" class="size-4" /> Log in
-        </.link>
-        <.link
-          :if={@current_scope && @current_scope.user && @current_scope.user.role == "admin"}
-          navigate={~p"/admin/users"}
-          class="inline-flex items-center gap-2 rounded-lg border border-base-300 px-4 py-2.5 text-sm font-semibold transition hover:bg-base-200"
-        >
-          <.icon name="hero-shield-check" class="size-4" /> Admin controls
-        </.link>
-      </div>
-
-      <div class="grid gap-4 sm:grid-cols-3">
-        <div class="rounded-lg border border-base-300 bg-base-100 p-4">
-          <p class="text-2xl font-semibold">DSN</p>
-          <p class="mt-2 text-sm leading-6 text-base-content/65">
-            Existing SDKs can point at a project endpoint.
+  <main class="px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
+    <div class="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[minmax(0,1fr)_24rem]">
+      <section class="space-y-8">
+        <div class="space-y-5">
+          <p class="text-sm font-semibold uppercase tracking-[0.18em] text-orange-600">
+            Sentry SDK compatible error tracking
+          </p>
+          <h1 class="max-w-4xl text-4xl font-semibold leading-tight tracking-normal sm:text-6xl">
+            Lightweight error triage for teams that do not want a heavy stack.
+          </h1>
+          <p class="max-w-2xl text-base leading-7 text-base-content/70 sm:text-lg">
+            Faultline keeps the ingest path simple, the UI realtime, and the infrastructure small: Phoenix, LiveView, and PostgreSQL first.
           </p>
         </div>
-        <div class="rounded-lg border border-base-300 bg-base-100 p-4">
-          <p class="text-2xl font-semibold">Live</p>
-          <p class="mt-2 text-sm leading-6 text-base-content/65">
-            Issues update through LiveView and PubSub.
-          </p>
-        </div>
-        <div class="rounded-lg border border-base-300 bg-base-100 p-4">
-          <p class="text-2xl font-semibold">Small</p>
-          <p class="mt-2 text-sm leading-6 text-base-content/65">
-            PostgreSQL is enough for the early product.
-          </p>
-        </div>
-      </div>
-    </section>
 
-    <aside class="space-y-4">
-      <section class="rounded-lg border border-base-300 bg-base-200/60 p-5">
-        <h2 class="text-sm font-semibold uppercase tracking-[0.14em] text-base-content/60">
-          Current build
-        </h2>
-        <div class="mt-5 space-y-3 text-sm">
-          <div class="flex items-center justify-between gap-4">
-            <span class="text-base-content/65">Users</span>
-            <span class="font-semibold">enabled</span>
+        <div class="flex flex-wrap gap-3">
+          <.link
+            :if={@current_scope && @current_scope.user}
+            navigate={~p"/issues?project=-1"}
+            class="inline-flex items-center gap-2 rounded-lg bg-base-content px-4 py-2.5 text-sm font-semibold text-base-100 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+          >
+            <.icon name="hero-magnifying-glass" class="size-4" /> Open issues
+          </.link>
+          <.link
+            :if={!@current_scope || !@current_scope.user}
+            navigate={~p"/users/register"}
+            class="inline-flex items-center gap-2 rounded-lg bg-base-content px-4 py-2.5 text-sm font-semibold text-base-100 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+          >
+            <.icon name="hero-user-plus" class="size-4" /> Create account
+          </.link>
+          <.link
+            :if={!@current_scope || !@current_scope.user}
+            navigate={~p"/users/log-in"}
+            class="inline-flex items-center gap-2 rounded-lg border border-base-300 px-4 py-2.5 text-sm font-semibold transition hover:bg-base-200"
+          >
+            <.icon name="hero-arrow-right-on-rectangle" class="size-4" /> Log in
+          </.link>
+          <.link
+            :if={@current_scope && @current_scope.user && @current_scope.user.role == "admin"}
+            navigate={~p"/admin/users"}
+            class="inline-flex items-center gap-2 rounded-lg border border-base-300 px-4 py-2.5 text-sm font-semibold transition hover:bg-base-200"
+          >
+            <.icon name="hero-shield-check" class="size-4" /> Admin controls
+          </.link>
+        </div>
+
+        <div class="grid gap-4 sm:grid-cols-3">
+          <div class="rounded-lg border border-base-300 bg-base-100 p-4">
+            <p class="text-2xl font-semibold">DSN</p>
+            <p class="mt-2 text-sm leading-6 text-base-content/65">
+              Existing SDKs can point at a project endpoint.
+            </p>
           </div>
-          <div class="flex items-center justify-between gap-4">
-            <span class="text-base-content/65">Admin controls</span>
-            <span class="font-semibold">role based</span>
+          <div class="rounded-lg border border-base-300 bg-base-100 p-4">
+            <p class="text-2xl font-semibold">Live</p>
+            <p class="mt-2 text-sm leading-6 text-base-content/65">
+              Issues update through LiveView and PubSub.
+            </p>
           </div>
-          <div class="flex items-center justify-between gap-4">
-            <span class="text-base-content/65">Ingest</span>
-            <span class="font-semibold">store + envelope</span>
-          </div>
-          <div class="flex items-center justify-between gap-4">
-            <span class="text-base-content/65">UI</span>
-            <span class="font-semibold">LiveView</span>
+          <div class="rounded-lg border border-base-300 bg-base-100 p-4">
+            <p class="text-2xl font-semibold">Small</p>
+            <p class="mt-2 text-sm leading-6 text-base-content/65">
+              PostgreSQL is enough for the early product.
+            </p>
           </div>
         </div>
       </section>
 
-      <section class="rounded-lg border border-base-300 bg-base-100 p-5">
-        <h2 class="text-sm font-semibold uppercase tracking-[0.14em] text-base-content/60">
-          Next tasks
-        </h2>
-        <ul class="mt-5 space-y-3 text-sm leading-6 text-base-content/70">
-          <li class="flex gap-3">
-            <.icon name="hero-check-circle" class="mt-1 size-4 text-green-600" />
-            <span>Protect project and issue workflows behind login.</span>
-          </li>
-          <li class="flex gap-3">
-            <.icon name="hero-check-circle" class="mt-1 size-4 text-green-600" />
-            <span>Add admin user management.</span>
-          </li>
-          <li class="flex gap-3">
-            <.icon name="hero-circle-stack" class="mt-1 size-4 text-base-content/40" />
-            <span>Add organization and team membership.</span>
-          </li>
-        </ul>
-      </section>
-    </aside>
+      <aside class="space-y-4">
+        <section class="rounded-lg border border-base-300 bg-base-200/60 p-5">
+          <h2 class="text-sm font-semibold uppercase tracking-[0.14em] text-base-content/60">
+            Current build
+          </h2>
+          <div class="mt-5 space-y-3 text-sm">
+            <div class="flex items-center justify-between gap-4">
+              <span class="text-base-content/65">Users</span>
+              <span class="font-semibold">enabled</span>
+            </div>
+            <div class="flex items-center justify-between gap-4">
+              <span class="text-base-content/65">Admin controls</span>
+              <span class="font-semibold">role based</span>
+            </div>
+            <div class="flex items-center justify-between gap-4">
+              <span class="text-base-content/65">Ingest</span>
+              <span class="font-semibold">store + envelope</span>
+            </div>
+            <div class="flex items-center justify-between gap-4">
+              <span class="text-base-content/65">UI</span>
+              <span class="font-semibold">LiveView</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="rounded-lg border border-base-300 bg-base-100 p-5">
+          <h2 class="text-sm font-semibold uppercase tracking-[0.14em] text-base-content/60">
+            Next tasks
+          </h2>
+          <ul class="mt-5 space-y-3 text-sm leading-6 text-base-content/70">
+            <li class="flex gap-3">
+              <.icon name="hero-check-circle" class="mt-1 size-4 text-green-600" />
+              <span>Protect project and issue workflows behind login.</span>
+            </li>
+            <li class="flex gap-3">
+              <.icon name="hero-check-circle" class="mt-1 size-4 text-green-600" />
+              <span>Add admin user management.</span>
+            </li>
+            <li class="flex gap-3">
+              <.icon name="hero-circle-stack" class="mt-1 size-4 text-base-content/40" />
+              <span>Add organization and team membership.</span>
+            </li>
+          </ul>
+        </section>
+      </aside>
+    </div>
   </main>
 </div>

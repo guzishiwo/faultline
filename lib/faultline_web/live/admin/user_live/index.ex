@@ -36,7 +36,7 @@ defmodule FaultlineWeb.Admin.UserLive.Index do
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
-      <div class="mx-auto w-full max-w-6xl space-y-8">
+      <div class="w-full space-y-8">
         <section class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_16rem] lg:items-end">
           <div class="space-y-3">
             <p class="text-sm font-semibold uppercase tracking-[0.18em] text-orange-600">

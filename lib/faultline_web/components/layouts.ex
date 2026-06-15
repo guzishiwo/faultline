@@ -35,47 +35,66 @@ defmodule FaultlineWeb.Layouts do
 
   def app(assigns) do
     ~H"""
-    <header class="navbar border-b border-base-300 bg-base-100 px-4 sm:px-6 lg:px-8">
-      <div class="flex-1">
-        <a href="/" class="flex w-fit items-center gap-3">
-          <span class="flex size-9 items-center justify-center rounded-lg bg-base-content text-sm font-bold text-base-100">
-            F
-          </span>
-          <span class="text-base font-semibold tracking-normal">Faultline</span>
-        </a>
-      </div>
+    <header class="sticky top-0 z-30 border-b border-base-300 bg-base-100/95 backdrop-blur">
+      <div class="px-4 sm:px-6 lg:px-8">
+        <div class="mx-auto flex h-14 max-w-7xl items-center gap-3">
+          <a id="app-home-link" href="/" class="flex min-w-0 items-center gap-2.5">
+            <span class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-base-content text-xs font-bold text-base-100 shadow-sm">
+              F
+            </span>
+            <span class="truncate text-sm font-semibold tracking-normal">Faultline</span>
+          </a>
 
-      <div class="flex-none overflow-x-auto">
-        <ul class="flex items-center gap-2 px-1">
-          <li :if={@current_scope && @current_scope.user}>
-            <.link navigate={~p"/issues?project=-1"} class="btn btn-ghost btn-sm">Issues</.link>
-          </li>
-          <li :if={@current_scope && @current_scope.user}>
-            <.link navigate={~p"/projects"} class="btn btn-ghost btn-sm">Projects</.link>
-          </li>
-          <li :if={@current_scope && @current_scope.user && @current_scope.user.role == "admin"}>
-            <.link navigate={~p"/admin/users"} class="btn btn-ghost btn-sm">Admin</.link>
-          </li>
-          <li>
+          <nav
+            :if={@current_scope && @current_scope.user}
+            id="app-primary-nav"
+            class="ml-auto hidden items-center rounded-full border border-base-300 bg-base-200/60 p-1 shadow-sm sm:flex"
+          >
+            <.link
+              navigate={~p"/issues?project=-1"}
+              class="rounded-full px-3 py-1.5 text-sm font-semibold leading-none transition hover:bg-base-100 hover:shadow-sm"
+            >
+              Issues
+            </.link>
+            <.link
+              navigate={~p"/projects"}
+              class="rounded-full px-3 py-1.5 text-sm font-semibold leading-none transition hover:bg-base-100 hover:shadow-sm"
+            >
+              Projects
+            </.link>
+            <.link
+              :if={@current_scope.user.role == "admin"}
+              navigate={~p"/admin/users"}
+              class="rounded-full px-3 py-1.5 text-sm font-semibold leading-none transition hover:bg-base-100 hover:shadow-sm"
+            >
+              Admin
+            </.link>
+          </nav>
+
+          <div class={[
+            "flex items-center gap-1.5",
+            @current_scope && @current_scope.user && "ml-auto sm:ml-0",
+            !(@current_scope && @current_scope.user) && "ml-auto"
+          ]}>
             <.theme_toggle />
-          </li>
-          <li :if={@current_scope && @current_scope.user}>
-            <.link navigate={~p"/users/settings"} class="btn btn-ghost btn-sm">
-              Settings
+            <.account_menu current_scope={@current_scope} />
+
+            <.link
+              :if={!@current_scope || !@current_scope.user}
+              navigate={~p"/users/log-in"}
+              class="rounded-lg px-3 py-2 text-sm font-semibold transition hover:bg-base-200"
+            >
+              Log in
             </.link>
-          </li>
-          <li :if={@current_scope && @current_scope.user}>
-            <.link href={~p"/users/log-out"} method="delete" class="btn btn-ghost btn-sm">
-              Log out
+            <.link
+              :if={!@current_scope || !@current_scope.user}
+              navigate={~p"/users/register"}
+              class="rounded-lg bg-base-content px-3 py-2 text-sm font-semibold text-base-100 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+            >
+              Register
             </.link>
-          </li>
-          <li :if={!@current_scope || !@current_scope.user}>
-            <.link navigate={~p"/users/log-in"} class="btn btn-ghost btn-sm">Log in</.link>
-          </li>
-          <li :if={!@current_scope || !@current_scope.user}>
-            <.link navigate={~p"/users/register"} class="btn btn-neutral btn-sm">Register</.link>
-          </li>
-        </ul>
+          </div>
+        </div>
       </div>
     </header>
 
@@ -139,33 +158,125 @@ defmodule FaultlineWeb.Layouts do
   """
   def theme_toggle(assigns) do
     ~H"""
-    <div class="card relative flex flex-row items-center border-2 border-base-300 bg-base-300 rounded-full">
-      <div class="absolute w-1/3 h-full rounded-full border-1 border-base-200 bg-base-100 brightness-200 left-0 [[data-theme=light]_&]:left-1/3 [[data-theme=dark]_&]:left-2/3 transition-[left]" />
-
-      <button
-        class="flex p-2 cursor-pointer w-1/3"
-        phx-click={JS.dispatch("phx:set-theme")}
-        data-phx-theme="system"
+    <details class="group relative">
+      <summary
+        id="theme-menu-trigger"
+        class="flex size-9 cursor-pointer list-none items-center justify-center rounded-lg border border-base-300 bg-base-100 text-base-content/70 shadow-sm transition hover:-translate-y-0.5 hover:text-base-content hover:shadow-md [&::-webkit-details-marker]:hidden"
+        aria-label="Theme"
       >
-        <.icon name="hero-computer-desktop-micro" class="size-4 opacity-75 hover:opacity-100" />
-      </button>
+        <.icon name="hero-sun-micro" class="size-4 dark:hidden" />
+        <.icon name="hero-moon-micro" class="hidden size-4 dark:block" />
+      </summary>
 
-      <button
-        class="flex p-2 cursor-pointer w-1/3"
-        phx-click={JS.dispatch("phx:set-theme")}
-        data-phx-theme="light"
+      <div
+        id="theme-menu"
+        class="absolute right-0 z-40 mt-2 w-44 overflow-hidden rounded-lg border border-base-300 bg-base-100 p-1 shadow-xl"
       >
-        <.icon name="hero-sun-micro" class="size-4 opacity-75 hover:opacity-100" />
-      </button>
-
-      <button
-        class="flex p-2 cursor-pointer w-1/3"
-        phx-click={JS.dispatch("phx:set-theme")}
-        data-phx-theme="dark"
-      >
-        <.icon name="hero-moon-micro" class="size-4 opacity-75 hover:opacity-100" />
-      </button>
-    </div>
+        <button
+          class="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm font-semibold transition hover:bg-base-200"
+          phx-click={JS.dispatch("phx:set-theme")}
+          data-phx-theme="system"
+        >
+          <.icon name="hero-computer-desktop-micro" class="size-4 text-base-content/60" /> System
+        </button>
+        <button
+          class="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm font-semibold transition hover:bg-base-200"
+          phx-click={JS.dispatch("phx:set-theme")}
+          data-phx-theme="light"
+        >
+          <.icon name="hero-sun-micro" class="size-4 text-base-content/60" /> Light
+        </button>
+        <button
+          class="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm font-semibold transition hover:bg-base-200"
+          phx-click={JS.dispatch("phx:set-theme")}
+          data-phx-theme="dark"
+        >
+          <.icon name="hero-moon-micro" class="size-4 text-base-content/60" /> Dark
+        </button>
+      </div>
+    </details>
     """
+  end
+
+  attr :current_scope, :map, default: nil
+
+  def account_menu(assigns) do
+    ~H"""
+    <details :if={@current_scope && @current_scope.user} class="group relative">
+      <summary
+        id="account-menu-trigger"
+        class="flex size-9 cursor-pointer list-none items-center justify-center rounded-lg border border-base-300 bg-base-content text-xs font-bold uppercase text-base-100 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md [&::-webkit-details-marker]:hidden"
+        aria-label="Account menu"
+      >
+        {user_initial(@current_scope.user)}
+      </summary>
+
+      <div
+        id="account-menu"
+        class="absolute right-0 z-40 mt-2 w-60 overflow-hidden rounded-lg border border-base-300 bg-base-100 p-1 shadow-xl"
+      >
+        <div class="px-3 py-2">
+          <p class="truncate text-sm font-semibold text-base-content">
+            {@current_scope.user.email}
+          </p>
+          <p class="mt-0.5 text-xs uppercase tracking-[0.14em] text-base-content/50">
+            {@current_scope.user.role}
+          </p>
+        </div>
+
+        <div class="h-px bg-base-300" />
+
+        <div class="py-1 sm:hidden">
+          <.link
+            navigate={~p"/issues?project=-1"}
+            class="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold transition hover:bg-base-200"
+          >
+            <.icon name="hero-inbox-stack" class="size-4 text-base-content/60" /> Issues
+          </.link>
+          <.link
+            navigate={~p"/projects"}
+            class="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold transition hover:bg-base-200"
+          >
+            <.icon name="hero-briefcase" class="size-4 text-base-content/60" /> Projects
+          </.link>
+          <.link
+            :if={@current_scope.user.role == "admin"}
+            navigate={~p"/admin/users"}
+            class="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold transition hover:bg-base-200"
+          >
+            <.icon name="hero-shield-check" class="size-4 text-base-content/60" /> Admin
+          </.link>
+        </div>
+
+        <div class="h-px bg-base-300 sm:hidden" />
+
+        <div class="py-1">
+          <.link
+            navigate={~p"/users/settings"}
+            class="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold transition hover:bg-base-200"
+          >
+            <.icon name="hero-cog-6-tooth" class="size-4 text-base-content/60" /> Settings
+          </.link>
+          <.link
+            href={~p"/users/log-out"}
+            method="delete"
+            class="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 dark:hover:bg-red-950/30"
+          >
+            <.icon name="hero-arrow-right-on-rectangle" class="size-4" /> Log out
+          </.link>
+        </div>
+      </div>
+    </details>
+    """
+  end
+
+  defp user_initial(user) do
+    user.email
+    |> String.trim()
+    |> String.first()
+    |> case do
+      nil -> "U"
+      first -> String.upcase(first)
+    end
   end
 end
