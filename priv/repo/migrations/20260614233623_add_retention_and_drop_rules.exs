@@ -15,7 +15,7 @@ defmodule Faultline.Repo.Migrations.AddRetentionAndDropRules do
       add :match_type, :string, null: false
       add :match_value, :string, null: false
 
-      timestamps(type: :utc_datetime)
+      timestamps(type: :utc_datetime_usec)
     end
 
     create index(:project_drop_rules, [:project_id])

@@ -1,5 +1,5 @@
 defmodule Faultline.Alerts.AlertRule do
-  use Ecto.Schema
+  use Faultline.Schema
 
   import Ecto.Changeset
 
@@ -23,7 +23,7 @@ defmodule Faultline.Alerts.AlertRule do
     belongs_to :project, Project
     has_many :alert_deliveries, AlertDelivery
 
-    timestamps(type: :utc_datetime)
+    timestamps(type: :utc_datetime_usec)
   end
 
   @doc false

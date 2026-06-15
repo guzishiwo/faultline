@@ -87,7 +87,9 @@ defmodule Faultline.Events.Normalizer do
         "stacktrace_frames" => stacktrace_frames(exception)
       },
       "fingerprint" => fingerprint(payload),
+      "modules" => map_value(payload, "modules"),
       "request" => request,
+      "sdk" => map_value(payload, "sdk"),
       "tags" => tags(payload),
       "user" => user
     }

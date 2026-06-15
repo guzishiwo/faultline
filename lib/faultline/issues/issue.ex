@@ -1,5 +1,5 @@
 defmodule Faultline.Issues.Issue do
-  use Ecto.Schema
+  use Faultline.Schema
 
   import Ecto.Changeset
 
@@ -22,7 +22,7 @@ defmodule Faultline.Issues.Issue do
     belongs_to :project, Project
     has_many :events, Event
 
-    timestamps(type: :utc_datetime)
+    timestamps(type: :utc_datetime_usec)
   end
 
   @doc false

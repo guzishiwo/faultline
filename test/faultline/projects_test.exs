@@ -21,13 +21,16 @@ defmodule Faultline.ProjectsTest do
       assert project.slug == "checkout-api"
       assert project.rate_limit_max_events == 250
       assert project.rate_limit_window_seconds == 30
+      assert String.at(project.id, 14) == "7"
+      assert is_integer(project.project_number)
+      assert project.project_number > 0
       assert byte_size(project.public_key) == 32
       assert byte_size(project.secret_key) == 32
       assert project.public_key =~ ~r/^[a-f0-9]{32}$/
       assert project.secret_key =~ ~r/^[a-f0-9]{32}$/
 
       assert project.dsn ==
-               "https://#{project.public_key}:#{project.secret_key}@errors.example.com/#{project.id}"
+               "https://#{project.public_key}:#{project.secret_key}@errors.example.com/#{project.project_number}"
     end
 
     test "list_projects/0 returns created projects newest first" do
@@ -64,7 +67,8 @@ defmodule Faultline.ProjectsTest do
   describe "dsn generation" do
     test "build/2 strips any base path, query, and fragment" do
       project = %Project{
-        id: 42,
+        id: "1a78e838-8532-43f8-96fe-080ae20657ad",
+        project_number: 42,
         public_key: "public",
         secret_key: "secret"
       }

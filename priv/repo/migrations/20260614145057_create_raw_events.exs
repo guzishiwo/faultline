@@ -11,7 +11,7 @@ defmodule Faultline.Repo.Migrations.CreateRawEvents do
       add :auth, :map, null: false
       add :received_at, :utc_datetime_usec, null: false
 
-      timestamps(type: :utc_datetime)
+      timestamps(type: :utc_datetime_usec)
     end
 
     create index(:raw_events, [:project_id])

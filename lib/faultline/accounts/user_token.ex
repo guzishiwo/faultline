@@ -1,5 +1,6 @@
 defmodule Faultline.Accounts.UserToken do
-  use Ecto.Schema
+  use Faultline.Schema
+
   import Ecto.Query
   alias Faultline.Accounts.UserToken
 
@@ -19,7 +20,7 @@ defmodule Faultline.Accounts.UserToken do
     field :authenticated_at, :utc_datetime
     belongs_to :user, Faultline.Accounts.User
 
-    timestamps(type: :utc_datetime, updated_at: false)
+    timestamps(type: :utc_datetime_usec, updated_at: false)
   end
 
   @doc """

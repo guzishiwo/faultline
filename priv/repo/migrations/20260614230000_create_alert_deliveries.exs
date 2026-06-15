@@ -13,7 +13,7 @@ defmodule Faultline.Repo.Migrations.CreateAlertDeliveries do
       add :project_id, references(:projects, on_delete: :delete_all), null: false
       add :issue_id, references(:issues, on_delete: :delete_all), null: false
 
-      timestamps(type: :utc_datetime)
+      timestamps(type: :utc_datetime_usec)
     end
 
     create index(:alert_deliveries, [:alert_rule_id])

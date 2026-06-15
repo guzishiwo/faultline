@@ -36,9 +36,9 @@ defmodule Faultline.AccountsTest do
   end
 
   describe "get_user!/1" do
-    test "raises if id is invalid" do
+    test "raises if id does not exist" do
       assert_raise Ecto.NoResultsError, fn ->
-        Accounts.get_user!(-1)
+        Accounts.get_user!("00000000-0000-0000-0000-000000000000")
       end
     end
 

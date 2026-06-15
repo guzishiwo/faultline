@@ -4,8 +4,9 @@ defmodule FaultlineWeb.ProjectLive.Usage do
   alias Faultline.Projects
 
   @impl true
-  def mount(%{"project_id" => project_id}, _session, socket) do
-    usage = Projects.get_project_usage!(project_id)
+  def mount(params, _session, socket) do
+    project = Projects.get_project_by_route_param!(params)
+    usage = Projects.get_project_usage!(project)
 
     {:ok, assign(socket, :usage, usage)}
   end
@@ -19,7 +20,7 @@ defmodule FaultlineWeb.ProjectLive.Usage do
           <div class="space-y-3">
             <.link
               id="back-to-project-settings-link"
-              navigate={~p"/projects/#{@usage.project.id}/settings"}
+              navigate={~p"/p/#{@usage.project.slug}/settings"}
               class="inline-flex items-center gap-2 text-sm font-semibold text-base-content/60 transition hover:text-base-content"
             >
               <.icon name="hero-arrow-left" class="size-4" /> Project settings
@@ -36,7 +37,7 @@ defmodule FaultlineWeb.ProjectLive.Usage do
 
           <.link
             id="project-issues-link"
-            navigate={~p"/projects/#{@usage.project.id}/issues"}
+            navigate={~p"/p/#{@usage.project.slug}/issues"}
             class="inline-flex w-fit items-center gap-2 rounded-lg bg-base-content px-4 py-2.5 text-sm font-semibold text-base-100 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
           >
             Open triage <.icon name="hero-arrow-right" class="size-4" />

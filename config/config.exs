@@ -14,7 +14,7 @@ config :faultline, :scopes,
     assign_key: :current_scope,
     access_path: [:user, :id],
     schema_key: :user_id,
-    schema_type: :id,
+    schema_type: :binary_id,
     schema_table: :users,
     test_data_fixture: Faultline.AccountsFixtures,
     test_setup_helper: :register_and_log_in_user
@@ -22,7 +22,11 @@ config :faultline, :scopes,
 
 config :faultline,
   ecto_repos: [Faultline.Repo],
-  generators: [timestamp_type: :utc_datetime]
+  generators: [timestamp_type: :utc_datetime_usec, binary_id: true]
+
+config :faultline, Faultline.Repo,
+  migration_primary_key: [name: :id, type: :binary_id],
+  migration_foreign_key: [type: :binary_id]
 
 config :faultline, :ingest, max_envelope_bytes: 1_000_000
 

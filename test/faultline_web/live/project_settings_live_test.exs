@@ -12,7 +12,7 @@ defmodule FaultlineWeb.ProjectSettingsLiveTest do
   test "shows project settings and manages alert rules", %{conn: conn} do
     project = project_fixture()
 
-    {:ok, view, _html} = live(conn, ~p"/projects/#{project.id}/settings")
+    {:ok, view, _html} = live(conn, ~p"/p/#{project.slug}/settings")
 
     assert has_element?(view, "#project-settings-page")
     assert has_element?(view, "#project-sdk-settings")
@@ -142,7 +142,7 @@ defmodule FaultlineWeb.ProjectSettingsLiveTest do
   test "shows validation errors for invalid alert targets", %{conn: conn} do
     project = project_fixture()
 
-    {:ok, view, _html} = live(conn, ~p"/projects/#{project.id}/settings")
+    {:ok, view, _html} = live(conn, ~p"/p/#{project.slug}/settings")
 
     view
     |> form("#alert-rule-form",
@@ -172,7 +172,7 @@ defmodule FaultlineWeb.ProjectSettingsLiveTest do
   test "shows project usage page", %{conn: conn} do
     project = project_fixture()
 
-    {:ok, view, _html} = live(conn, ~p"/projects/#{project.id}/usage")
+    {:ok, view, _html} = live(conn, ~p"/p/#{project.slug}/usage")
 
     assert has_element?(view, "#project-usage-page")
     assert has_element?(view, "#usage-events", "0")

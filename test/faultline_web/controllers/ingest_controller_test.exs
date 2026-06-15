@@ -18,7 +18,7 @@ defmodule FaultlineWeb.IngestControllerTest do
       conn
       |> put_req_header("content-type", "application/json")
       |> put_req_header("x-sentry-auth", sentry_auth_header(project))
-      |> post(~p"/api/#{project.id}/store/", body)
+      |> post(~p"/api/#{project.project_number}/store/", body)
 
     assert %{"id" => "11111111111111111111111111111111"} = json_response(conn, 200)
 
@@ -39,7 +39,7 @@ defmodule FaultlineWeb.IngestControllerTest do
       conn
       |> put_req_header("content-type", "application/x-sentry-envelope")
       |> post(
-        ~p"/api/#{project.id}/envelope/?sentry_key=#{project.public_key}&sentry_secret=#{project.secret_key}&sentry_version=7",
+        ~p"/api/#{project.project_number}/envelope/?sentry_key=#{project.public_key}&sentry_secret=#{project.secret_key}&sentry_version=7",
         body
       )
 
@@ -63,7 +63,7 @@ defmodule FaultlineWeb.IngestControllerTest do
         "x-sentry-auth",
         "Sentry sentry_version=7, sentry_key=wrong, sentry_secret=#{project.secret_key}"
       )
-      |> post(~p"/api/#{project.id}/store/", body)
+      |> post(~p"/api/#{project.project_number}/store/", body)
 
     assert %{"errors" => %{"detail" => "Invalid Sentry authentication"}} =
              json_response(conn, 401)
@@ -78,7 +78,7 @@ defmodule FaultlineWeb.IngestControllerTest do
       conn
       |> put_req_header("content-type", "application/x-sentry-envelope")
       |> put_req_header("x-sentry-auth", sentry_auth_header(project))
-      |> post(~p"/api/#{project.id}/envelope/", "not-json\n")
+      |> post(~p"/api/#{project.project_number}/envelope/", "not-json\n")
 
     assert %{"errors" => %{"detail" => "Invalid Sentry payload"}} = json_response(conn, 400)
     assert Repo.aggregate(RawEvent, :count) == 0
@@ -97,7 +97,7 @@ defmodule FaultlineWeb.IngestControllerTest do
       conn
       |> put_req_header("content-type", "application/json")
       |> put_req_header("x-sentry-auth", sentry_auth_header(project))
-      |> post(~p"/api/#{project.id}/store/", body)
+      |> post(~p"/api/#{project.project_number}/store/", body)
 
     assert json_response(first_conn, 200)
 
@@ -105,7 +105,7 @@ defmodule FaultlineWeb.IngestControllerTest do
       build_conn()
       |> put_req_header("content-type", "application/json")
       |> put_req_header("x-sentry-auth", sentry_auth_header(project))
-      |> post(~p"/api/#{project.id}/store/", body)
+      |> post(~p"/api/#{project.project_number}/store/", body)
 
     assert %{"errors" => %{"detail" => "Project ingest rate limit exceeded"}} =
              json_response(second_conn, 429)
@@ -131,7 +131,7 @@ defmodule FaultlineWeb.IngestControllerTest do
       conn
       |> put_req_header("content-type", "application/json")
       |> put_req_header("x-sentry-auth", sentry_auth_header(project))
-      |> post(~p"/api/#{project.id}/store/", body)
+      |> post(~p"/api/#{project.project_number}/store/", body)
 
     assert %{"id" => "11111111111111111111111111111111"} = json_response(conn, 200)
     assert Repo.aggregate(RawEvent, :count) == 0
@@ -151,7 +151,7 @@ defmodule FaultlineWeb.IngestControllerTest do
       conn
       |> put_req_header("content-type", "application/x-sentry-envelope")
       |> put_req_header("x-sentry-auth", sentry_auth_header(project))
-      |> post(~p"/api/#{project.id}/envelope/", String.duplicate("x", 32))
+      |> post(~p"/api/#{project.project_number}/envelope/", String.duplicate("x", 32))
 
     assert %{"errors" => %{"detail" => "Sentry envelope is too large"}} =
              json_response(conn, 413)

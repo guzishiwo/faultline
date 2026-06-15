@@ -7,8 +7,8 @@ defmodule FaultlineWeb.IssueLive.Index do
   @page_size 20
 
   @impl true
-  def mount(%{"project_id" => project_id}, _session, socket) do
-    project = Projects.get_project!(project_id)
+  def mount(params, _session, socket) do
+    project = Projects.get_project_by_route_param!(params)
     page = Issues.paginate_project_issues(project.id, limit: @page_size)
 
     if connected?(socket), do: Issues.subscribe(project.id)
@@ -92,7 +92,7 @@ defmodule FaultlineWeb.IssueLive.Index do
             <.link
               :for={{id, issue} <- @streams.issues}
               id={id}
-              navigate={~p"/projects/#{@project.id}/issues/#{issue.id}"}
+              navigate={~p"/p/#{@project.slug}/issues/#{issue.id}"}
               class="grid grid-cols-[1fr_7rem_7rem_7rem_10rem] gap-4 px-5 py-4 transition hover:bg-base-200/70"
             >
               <div class="min-w-0">

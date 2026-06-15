@@ -12,7 +12,17 @@ defmodule Faultline.EventsTest do
 
   describe "normalize_raw_event/1" do
     test "extracts queryable fields and JSON details from a JavaScript event" do
-      raw_event = raw_event_fixture("javascript.json")
+      raw_event =
+        raw_event_fixture("javascript.json",
+          payload: %{
+            "contexts" => %{
+              "runtime" => %{"name" => "node", "version" => "v25.8.2"},
+              "trace" => %{"trace_id" => "ab08bb5f21f04795ad26d8d3f919379d"}
+            },
+            "modules" => %{"@sentry/node" => "^10.57.0"},
+            "sdk" => %{"name" => "sentry.javascript.node", "version" => "10.57.0"}
+          }
+        )
 
       assert {:ok, event} = Events.normalize_raw_event(raw_event)
 
@@ -31,6 +41,10 @@ defmodule Faultline.EventsTest do
       assert event.user_identifier == "user-123"
       assert event.request_url == "https://example.com/checkout"
       assert event.details["tags"] == %{"browser" => "Chrome", "region" => "iad"}
+      assert event.details["contexts"]["runtime"]["name"] == "node"
+      assert event.details["contexts"]["trace"]["trace_id"] == "ab08bb5f21f04795ad26d8d3f919379d"
+      assert event.details["modules"] == %{"@sentry/node" => "^10.57.0"}
+      assert event.details["sdk"]["name"] == "sentry.javascript.node"
       assert [%{"function" => "submitOrder"}] = event.details["exception"]["stacktrace_frames"]
       assert [%{"message" => "Submit order"}] = event.details["breadcrumbs"]
     end
@@ -101,7 +115,11 @@ defmodule Faultline.EventsTest do
 
   defp raw_event_fixture(filename, opts \\ []) do
     project = Keyword.get_lazy(opts, :project, &project_fixture/0)
-    payload = fixture_payload(filename)
+
+    payload =
+      filename
+      |> fixture_payload()
+      |> Map.merge(Keyword.get(opts, :payload, %{}))
 
     %RawEvent{}
     |> RawEvent.changeset(%{

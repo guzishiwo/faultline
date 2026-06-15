@@ -18,8 +18,8 @@ defmodule Faultline.Ingest do
   Finds and authorizes a project from request auth.
   """
   def authorize_project(project_id, conn) do
-    with {:ok, project_id} <- parse_project_id(project_id),
-         %Project{} = project <- Repo.get(Project, project_id),
+    with {:ok, project_number} <- parse_project_number(project_id),
+         %Project{} = project <- Repo.get_by(Project, project_number: project_number),
          {:ok, auth} <- Auth.parse(conn),
          true <- Auth.authorized?(project, auth) do
       {:ok, project, auth}
@@ -206,9 +206,9 @@ defmodule Faultline.Ingest do
     |> Map.new()
   end
 
-  defp parse_project_id(project_id) when is_binary(project_id) do
+  defp parse_project_number(project_id) when is_binary(project_id) do
     case Integer.parse(project_id) do
-      {id, ""} -> {:ok, id}
+      {project_number, ""} when project_number > 0 -> {:ok, project_number}
       _ -> {:error, :project_not_found}
     end
   end

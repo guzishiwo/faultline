@@ -1,5 +1,5 @@
 defmodule Faultline.Projects.Project do
-  use Ecto.Schema
+  use Faultline.Schema
 
   import Ecto.Changeset
 
@@ -9,6 +9,7 @@ defmodule Faultline.Projects.Project do
   @type t :: %__MODULE__{}
 
   schema "projects" do
+    field :project_number, :integer, read_after_writes: true
     field :name, :string
     field :slug, :string
     field :public_key, :string
@@ -22,7 +23,7 @@ defmodule Faultline.Projects.Project do
     has_many :alert_rules, AlertRule
     has_many :drop_rules, ProjectDropRule
 
-    timestamps(type: :utc_datetime)
+    timestamps(type: :utc_datetime_usec)
   end
 
   @doc false
@@ -47,6 +48,7 @@ defmodule Faultline.Projects.Project do
     |> put_slug()
     |> put_keys()
     |> put_placeholder_dsn()
+    |> unique_constraint(:project_number)
     |> unique_constraint(:slug)
     |> unique_constraint(:public_key)
   end

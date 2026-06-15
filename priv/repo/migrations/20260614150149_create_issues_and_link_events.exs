@@ -12,7 +12,7 @@ defmodule Faultline.Repo.Migrations.CreateIssuesAndLinkEvents do
       add :event_count, :integer, null: false, default: 0
       add :affected_user_count, :integer, null: false, default: 0
 
-      timestamps(type: :utc_datetime)
+      timestamps(type: :utc_datetime_usec)
     end
 
     create unique_index(:issues, [:project_id, :fingerprint])

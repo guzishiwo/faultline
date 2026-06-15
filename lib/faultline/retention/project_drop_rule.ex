@@ -1,5 +1,5 @@
 defmodule Faultline.Retention.ProjectDropRule do
-  use Ecto.Schema
+  use Faultline.Schema
 
   import Ecto.Changeset
 
@@ -19,7 +19,7 @@ defmodule Faultline.Retention.ProjectDropRule do
 
     belongs_to :project, Project
 
-    timestamps(type: :utc_datetime)
+    timestamps(type: :utc_datetime_usec)
   end
 
   def changeset(drop_rule, attrs) do

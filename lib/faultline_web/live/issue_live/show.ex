@@ -6,8 +6,8 @@ defmodule FaultlineWeb.IssueLive.Show do
   alias Faultline.Projects
 
   @impl true
-  def mount(%{"project_id" => project_id, "id" => issue_id}, _session, socket) do
-    project = Projects.get_project!(project_id)
+  def mount(%{"id" => issue_id} = params, _session, socket) do
+    project = Projects.get_project_by_route_param!(params)
     issue = Issues.get_project_issue!(project.id, issue_id)
     events = Events.list_issue_events(issue.id, limit: 20)
 
@@ -18,7 +18,7 @@ defmodule FaultlineWeb.IssueLive.Show do
      |> assign(:project, project)
      |> assign(:issue, issue)
      |> assign(:events, events)
-     |> assign(:selected_event, List.first(events))
+     |> assign(:selected_event, selected_event_for_detail(issue.id, List.first(events)))
      |> assign(:raw_event_payload, nil)
      |> assign(:raw_event_event_id, nil)}
   end
@@ -39,7 +39,7 @@ defmodule FaultlineWeb.IssueLive.Show do
 
     {:noreply,
      socket
-     |> assign(:selected_event, event)
+     |> assign(:selected_event, with_raw_detail_fallbacks(event))
      |> assign(:raw_event_payload, event.raw_event.payload)
      |> assign(:raw_event_event_id, event.id)}
   end
@@ -52,7 +52,7 @@ defmodule FaultlineWeb.IssueLive.Show do
       event ->
         {:noreply,
          socket
-         |> assign(:selected_event, event)
+         |> assign(:selected_event, selected_event_for_detail(socket.assigns.issue.id, event))
          |> assign(:raw_event_payload, nil)
          |> assign(:raw_event_event_id, nil)}
     end
@@ -76,7 +76,7 @@ defmodule FaultlineWeb.IssueLive.Show do
           <div class="min-w-0 space-y-3">
             <.link
               id="back-to-issues-link"
-              navigate={~p"/projects/#{@project.id}/issues"}
+              navigate={~p"/p/#{@project.slug}/issues"}
               class="inline-flex items-center gap-2 text-sm font-semibold text-base-content/60 transition hover:text-base-content"
             >
               <.icon name="hero-arrow-left" class="size-4" /> Issues
@@ -217,26 +217,53 @@ defmodule FaultlineWeb.IssueLive.Show do
                 </button>
               </div>
 
-              <div class="grid gap-5 p-5">
-                <dl class="grid gap-x-5 gap-y-3 text-sm sm:grid-cols-2">
-                  <.kv label="Exception" value={compact_exception(@selected_event)} />
-                  <.kv label="Culprit" value={@selected_event.culprit} />
-                  <.kv label="Release" value={@selected_event.release} />
-                  <.kv label="Environment" value={@selected_event.environment} />
-                  <.kv label="Server" value={@selected_event.server_name} />
-                  <.kv label="User" value={@selected_event.user_identifier} />
-                  <.kv label="Request" value={@selected_event.request_url} />
-                </dl>
+              <div class="space-y-5 p-5">
+                <section id="event-overview" class="grid gap-4">
+                  <h3 class="text-xs font-semibold uppercase tracking-[0.14em] text-base-content/50">
+                    Overview
+                  </h3>
+                  <dl class="grid gap-x-5 gap-y-3 text-sm sm:grid-cols-2 xl:grid-cols-3">
+                    <.kv label="Exception" value={compact_exception(@selected_event)} />
+                    <.kv label="Mechanism" value={mechanism_summary(@selected_event)} />
+                    <.kv label="Culprit" value={@selected_event.culprit} />
+                    <.kv label="Release" value={@selected_event.release} />
+                    <.kv label="Environment" value={@selected_event.environment} />
+                    <.kv label="Server" value={@selected_event.server_name} />
+                    <.kv label="User" value={@selected_event.user_identifier} />
+                    <.kv label="Request" value={@selected_event.request_url} />
+                    <.kv label="Trace" value={trace_summary(@selected_event)} />
+                  </dl>
+                </section>
 
-                <div class="grid gap-5 border-t border-base-300 pt-5">
+                <.stacktrace frames={
+                  get_in(@selected_event.details, ["exception", "stacktrace_frames"]) || []
+                } />
+
+                <section id="event-context" class="grid gap-5 border-t border-base-300 pt-5">
+                  <h3 class="text-xs font-semibold uppercase tracking-[0.14em] text-base-content/50">
+                    Context
+                  </h3>
                   <div class="grid gap-5 lg:grid-cols-2">
                     <.map_section title="Tags" values={@selected_event.details["tags"] || %{}} />
-                    <.breadcrumbs values={@selected_event.details["breadcrumbs"] || []} />
+                    <.map_section title="User" values={@selected_event.details["user"] || %{}} />
+                    <.map_section title="Request" values={@selected_event.details["request"] || %{}} />
+                    <.context_cards contexts={@selected_event.details["contexts"] || %{}} />
                   </div>
-                  <.stacktrace frames={
-                    get_in(@selected_event.details, ["exception", "stacktrace_frames"]) || []
-                  } />
-                </div>
+                </section>
+
+                <section id="event-sdk" class="grid gap-5 border-t border-base-300 pt-5">
+                  <h3 class="text-xs font-semibold uppercase tracking-[0.14em] text-base-content/50">
+                    SDK and runtime
+                  </h3>
+                  <div class="grid gap-5 lg:grid-cols-2">
+                    <.map_section title="SDK" values={sdk_summary(@selected_event)} />
+                    <.modules values={@selected_event.details["modules"] || %{}} />
+                  </div>
+                </section>
+
+                <section id="event-breadcrumbs" class="border-t border-base-300 pt-5">
+                  <.breadcrumbs values={@selected_event.details["breadcrumbs"] || []} />
+                </section>
               </div>
             </article>
 
@@ -293,7 +320,60 @@ defmodule FaultlineWeb.IssueLive.Show do
         <p :if={map_size(@values) == 0} class="text-base-content/50">None</p>
         <div :for={{key, value} <- @values} class="grid grid-cols-[7rem_minmax(0,1fr)] gap-2">
           <span class="break-words text-base-content/50">{key}</span>
-          <span class="break-words font-medium text-base-content">{inspect(value)}</span>
+          <span class="break-words font-medium text-base-content">{format_detail(value)}</span>
+        </div>
+      </div>
+    </section>
+    """
+  end
+
+  attr :contexts, :map, required: true
+
+  defp context_cards(assigns) do
+    assigns = assign(assigns, :visible_contexts, visible_contexts(assigns.contexts))
+
+    ~H"""
+    <section id="event-contexts" class="lg:col-span-2">
+      <h3 class="text-xs font-semibold uppercase tracking-[0.14em] text-base-content/50">
+        Contexts
+      </h3>
+      <div class="mt-2 grid gap-3 lg:grid-cols-2">
+        <p :if={@visible_contexts == []} class="text-sm text-base-content/50">None</p>
+        <article
+          :for={{name, values} <- @visible_contexts}
+          id={"event-context-#{name}"}
+          class="rounded-lg border border-base-300 bg-base-200/50 p-3"
+        >
+          <h4 class="font-mono text-xs font-semibold uppercase tracking-[0.12em] text-base-content/50">
+            {name}
+          </h4>
+          <dl class="mt-2 grid gap-1 text-sm">
+            <div :for={{key, value} <- values} class="grid grid-cols-[7rem_minmax(0,1fr)] gap-2">
+              <dt class="break-words text-base-content/50">{key}</dt>
+              <dd class="break-words font-medium text-base-content">{format_detail(value)}</dd>
+            </div>
+          </dl>
+        </article>
+      </div>
+    </section>
+    """
+  end
+
+  attr :values, :map, required: true
+
+  defp modules(assigns) do
+    assigns = assign(assigns, :modules, sorted_take(assigns.values, 12))
+
+    ~H"""
+    <section id="event-modules">
+      <h3 class="text-xs font-semibold uppercase tracking-[0.14em] text-base-content/50">
+        Modules
+      </h3>
+      <div class="mt-2 grid gap-1 text-sm">
+        <p :if={@modules == []} class="text-base-content/50">None</p>
+        <div :for={{name, version} <- @modules} class="grid grid-cols-[minmax(0,1fr)_7rem] gap-2">
+          <span class="truncate font-mono text-xs text-base-content/70">{name}</span>
+          <span class="truncate text-right font-mono text-xs text-base-content/50">{version}</span>
         </div>
       </div>
     </section>
@@ -366,7 +446,7 @@ defmodule FaultlineWeb.IssueLive.Show do
   end
 
   defp find_event(events, event_id) do
-    with {id, ""} <- Integer.parse(event_id) do
+    with {:ok, id} <- Ecto.UUID.cast(event_id) do
       Enum.find(events, &(&1.id == id))
     else
       _ -> nil
@@ -375,6 +455,43 @@ defmodule FaultlineWeb.IssueLive.Show do
 
   defp selected_event?(%{id: selected_id}, %{id: event_id}), do: selected_id == event_id
   defp selected_event?(_selected_event, _event), do: false
+
+  defp selected_event_for_detail(_issue_id, nil), do: nil
+
+  defp selected_event_for_detail(issue_id, event) do
+    issue_id
+    |> Events.get_issue_event_with_raw!(event.id)
+    |> with_raw_detail_fallbacks()
+  end
+
+  defp with_raw_detail_fallbacks(event) do
+    raw_payload = loaded_raw_payload(event)
+
+    details =
+      (event.details || %{})
+      |> fill_raw_map_detail(raw_payload, "contexts")
+      |> fill_raw_map_detail(raw_payload, "modules")
+      |> fill_raw_map_detail(raw_payload, "sdk")
+
+    %{event | details: details}
+  end
+
+  defp loaded_raw_payload(%{raw_event: raw_event}) do
+    if Ecto.assoc_loaded?(raw_event), do: raw_event.payload || %{}, else: %{}
+  end
+
+  defp loaded_raw_payload(_event), do: %{}
+
+  defp fill_raw_map_detail(details, raw_payload, key) do
+    current_value = Map.get(details, key)
+    raw_value = Map.get(raw_payload, key)
+
+    if blank_detail?(current_value) and is_map(raw_value) do
+      Map.put(details, key, raw_value)
+    else
+      details
+    end
+  end
 
   defp occurrence_title(event) do
     compact_exception(event) || event.message || "Event"
@@ -390,6 +507,127 @@ defmodule FaultlineWeb.IssueLive.Show do
       value -> value
     end
   end
+
+  defp mechanism_summary(event) do
+    mechanism = get_in(event.details, ["exception", "mechanism"]) || %{}
+
+    case {mechanism["type"], mechanism["handled"]} do
+      {nil, nil} -> nil
+      {type, nil} -> type
+      {nil, handled} -> "handled=#{handled}"
+      {type, handled} -> "#{type}, handled=#{handled}"
+    end
+  end
+
+  defp trace_summary(event) do
+    trace = get_in(event.details, ["contexts", "trace"]) || %{}
+
+    cond do
+      is_binary(trace["trace_id"]) and is_binary(trace["span_id"]) ->
+        "#{trace["trace_id"]} / #{trace["span_id"]}"
+
+      is_binary(trace["trace_id"]) ->
+        trace["trace_id"]
+
+      true ->
+        nil
+    end
+  end
+
+  defp sdk_summary(event) do
+    sdk = event.details["sdk"] || %{}
+
+    %{
+      "name" => sdk["name"],
+      "version" => sdk["version"],
+      "packages" => package_summary(sdk["packages"]),
+      "integrations" => integration_summary(sdk["integrations"])
+    }
+    |> Enum.reject(fn {_key, value} -> blank_detail?(value) end)
+    |> Map.new()
+  end
+
+  defp package_summary(packages) when is_list(packages) do
+    packages
+    |> Enum.take(3)
+    |> Enum.map(fn
+      %{"name" => name, "version" => version} -> "#{name}@#{version}"
+      value -> format_detail(value)
+    end)
+    |> Enum.join(", ")
+  end
+
+  defp package_summary(_packages), do: nil
+
+  defp integration_summary(integrations) when is_list(integrations) do
+    count = length(integrations)
+
+    integrations
+    |> Enum.take(8)
+    |> Enum.join(", ")
+    |> then(fn summary ->
+      if count > 8, do: "#{summary}, +#{count - 8} more", else: summary
+    end)
+  end
+
+  defp integration_summary(_integrations), do: nil
+
+  defp visible_contexts(contexts) when is_map(contexts) do
+    contexts
+    |> Map.take(~w(app runtime os device culture cloud_resource trace))
+    |> Enum.reject(fn {_name, values} -> blank_detail?(values) end)
+    |> Enum.map(fn {name, values} -> {name, values |> flatten_context() |> sorted_take(8)} end)
+    |> Enum.reject(fn {_name, values} -> values == [] end)
+    |> Enum.sort_by(fn {name, _values} -> context_order(name) end)
+  end
+
+  defp visible_contexts(_contexts), do: []
+
+  defp flatten_context(values) when is_map(values) do
+    values
+    |> Enum.reject(fn {_key, value} -> blank_detail?(value) end)
+    |> Enum.map(fn {key, value} -> {to_string(key), value} end)
+  end
+
+  defp flatten_context(_values), do: []
+
+  defp sorted_take(values, count) when is_map(values) do
+    values
+    |> Enum.map(fn {key, value} -> {to_string(key), value} end)
+    |> sorted_take(count)
+  end
+
+  defp sorted_take(values, count) when is_list(values) do
+    values
+    |> Enum.sort_by(fn {key, _value} -> key end)
+    |> Enum.take(count)
+  end
+
+  defp sorted_take(_values, _count), do: []
+
+  defp context_order("app"), do: 1
+  defp context_order("runtime"), do: 2
+  defp context_order("os"), do: 3
+  defp context_order("device"), do: 4
+  defp context_order("culture"), do: 5
+  defp context_order("trace"), do: 6
+  defp context_order(_name), do: 99
+
+  defp format_detail(value) when is_binary(value), do: value
+  defp format_detail(value) when is_integer(value), do: Integer.to_string(value)
+  defp format_detail(value) when is_float(value), do: Float.to_string(value)
+  defp format_detail(value) when is_boolean(value), do: to_string(value)
+
+  defp format_detail(value) when is_list(value),
+    do: value |> Enum.map(&format_detail/1) |> Enum.join(", ")
+
+  defp format_detail(value), do: inspect(value)
+
+  defp blank_detail?(nil), do: true
+  defp blank_detail?(""), do: true
+  defp blank_detail?(value) when is_map(value), do: map_size(value) == 0
+  defp blank_detail?(value) when is_list(value), do: value == []
+  defp blank_detail?(_value), do: false
 
   defp frame_location(frame) do
     filename = frame["filename"] || frame["abs_path"] || "unknown"

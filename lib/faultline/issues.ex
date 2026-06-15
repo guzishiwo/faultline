@@ -209,7 +209,7 @@ defmodule Faultline.Issues do
   defp decode_cursor(cursor) do
     with [timestamp, id] <- String.split(cursor, ":", parts: 2),
          {timestamp, ""} <- Integer.parse(timestamp),
-         {id, ""} <- Integer.parse(id),
+         {:ok, id} <- Ecto.UUID.cast(id),
          {:ok, last_seen_at} <- DateTime.from_unix(timestamp, :microsecond) do
       {:ok, last_seen_at, id}
     else

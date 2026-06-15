@@ -21,7 +21,7 @@ defmodule Faultline.Repo.Migrations.CreateEvents do
       add :request_url, :string
       add :details, :map, null: false, default: %{}
 
-      timestamps(type: :utc_datetime)
+      timestamps(type: :utc_datetime_usec)
     end
 
     create unique_index(:events, [:raw_event_id])

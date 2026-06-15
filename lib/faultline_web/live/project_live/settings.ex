@@ -35,8 +35,8 @@ defmodule FaultlineWeb.ProjectLive.Settings do
   ]
 
   @impl true
-  def mount(%{"project_id" => project_id}, _session, socket) do
-    project = Projects.get_project!(project_id)
+  def mount(params, _session, socket) do
+    project = Projects.get_project_by_route_param!(params)
     rules = Alerts.list_project_alert_rules(project.id)
     drop_rules = Retention.list_project_drop_rules(project.id)
 
@@ -202,14 +202,14 @@ defmodule FaultlineWeb.ProjectLive.Settings do
           <div class="flex flex-wrap gap-2">
             <.link
               id="project-usage-link"
-              navigate={~p"/projects/#{@project.id}/usage"}
+              navigate={~p"/p/#{@project.slug}/usage"}
               class="inline-flex w-fit items-center gap-2 rounded-lg border border-base-300 px-4 py-2.5 text-sm font-semibold text-base-content/70 transition hover:-translate-y-0.5 hover:bg-base-200 hover:text-base-content"
             >
               Usage <.icon name="hero-chart-bar" class="size-4" />
             </.link>
             <.link
               id="project-issues-link"
-              navigate={~p"/projects/#{@project.id}/issues"}
+              navigate={~p"/p/#{@project.slug}/issues"}
               class="inline-flex w-fit items-center gap-2 rounded-lg bg-base-content px-4 py-2.5 text-sm font-semibold text-base-100 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
             >
               Open triage <.icon name="hero-arrow-right" class="size-4" />

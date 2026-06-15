@@ -12,7 +12,7 @@ defmodule Faultline.Repo.Migrations.CreateAlertRules do
       add :cooldown_seconds, :integer, null: false, default: 900
       add :project_id, references(:projects, on_delete: :delete_all), null: false
 
-      timestamps(type: :utc_datetime)
+      timestamps(type: :utc_datetime_usec)
     end
 
     create index(:alert_rules, [:project_id])

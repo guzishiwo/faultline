@@ -29,6 +29,11 @@ defmodule Faultline.Projects do
   """
   def get_project!(id), do: Repo.get!(Project, id)
 
+  def get_project_by_slug!(slug), do: Repo.get_by!(Project, slug: slug)
+
+  def get_project_by_route_param!(%{"project_slug" => slug}), do: get_project_by_slug!(slug)
+  def get_project_by_route_param!(%{"project_id" => id}), do: get_project!(id)
+
   @doc """
   Creates a project and stores its Sentry-compatible DSN.
   """
@@ -64,9 +69,17 @@ defmodule Faultline.Projects do
     Project.settings_changeset(project, attrs)
   end
 
-  def get_project_usage!(id) do
-    project = get_project!(id)
+  def get_project_usage!(project_or_id)
 
+  def get_project_usage!(%Project{} = project), do: project_usage(project)
+
+  def get_project_usage!(id) do
+    id
+    |> get_project!()
+    |> project_usage()
+  end
+
+  defp project_usage(%Project{} = project) do
     %{
       project: project,
       raw_event_count: count_project(RawEvent, project.id),

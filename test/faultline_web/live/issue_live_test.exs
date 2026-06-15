@@ -16,7 +16,7 @@ defmodule FaultlineWeb.IssueLiveTest do
     project = project_fixture()
     event = event_fixture(project, "javascript.json")
 
-    {:ok, view, _html} = live(conn, ~p"/projects/#{project.id}/issues")
+    {:ok, view, _html} = live(conn, ~p"/p/#{project.slug}/issues")
 
     assert has_element?(view, "#issues")
     assert has_element?(view, "#issues-#{event.issue_id}")
@@ -38,7 +38,7 @@ defmodule FaultlineWeb.IssueLiveTest do
 
     oldest_event = List.first(events)
 
-    {:ok, view, _html} = live(conn, ~p"/projects/#{project.id}/issues")
+    {:ok, view, _html} = live(conn, ~p"/p/#{project.slug}/issues")
 
     assert has_element?(view, "#load-more-issues")
     refute has_element?(view, "#issues-#{oldest_event.issue_id}")
@@ -52,7 +52,7 @@ defmodule FaultlineWeb.IssueLiveTest do
 
   test "inserts new issues through PubSub", %{conn: conn} do
     project = project_fixture()
-    {:ok, view, _html} = live(conn, ~p"/projects/#{project.id}/issues")
+    {:ok, view, _html} = live(conn, ~p"/p/#{project.slug}/issues")
 
     assert has_element?(view, "#issues-empty-state")
 
@@ -74,17 +74,37 @@ defmodule FaultlineWeb.IssueLiveTest do
       event_fixture(project, "javascript.json", %{
         "event_id" => "99999999999999999999999999999999",
         "timestamp" => "2026-06-14T15:05:00Z",
-        "release" => "web@2.0.0"
+        "release" => "web@2.0.0",
+        "contexts" => smoke_contexts(),
+        "sdk" => smoke_sdk(),
+        "modules" => %{"@sentry/node" => "^10.57.0"}
       })
 
-    {:ok, view, _html} = live(conn, ~p"/projects/#{project.id}/issues/#{older_event.issue_id}")
+    newer_event
+    |> Ecto.Changeset.change(details: Map.drop(newer_event.details, ~w(contexts modules sdk)))
+    |> Repo.update!()
+
+    {:ok, view, _html} = live(conn, ~p"/p/#{project.slug}/issues/#{older_event.issue_id}")
 
     assert has_element?(view, "#issue-status", "unresolved")
     assert has_element?(view, "#issue-occurrences")
     assert has_element?(view, "#select-event-#{older_event.id}")
     assert has_element?(view, "#select-event-#{newer_event.id}")
+
+    view
+    |> element("#select-event-#{newer_event.id}")
+    |> render_click()
+
     assert has_element?(view, "#issue-event-#{newer_event.id}")
     assert has_element?(view, "#stack-frame-1")
+    assert has_element?(view, "#event-overview")
+    assert has_element?(view, "#event-context")
+    assert has_element?(view, "#event-sdk")
+    assert has_element?(view, "#event-context-runtime", "node")
+    assert has_element?(view, "#event-context-device", "Apple M3 Pro")
+    assert has_element?(view, "#event-context-trace", "ab08bb5f21f04795ad26d8d3f919379d")
+    assert has_element?(view, "#event-modules", "@sentry/node")
+    assert has_element?(view, "#event-sdk", "sentry.javascript.node")
     assert has_element?(view, "#load-raw-event-#{newer_event.id}")
 
     view
@@ -173,6 +193,30 @@ defmodule FaultlineWeb.IssueLiveTest do
           }
         }
       ]
+    }
+  end
+
+  defp smoke_contexts do
+    %{
+      "device" => %{
+        "arch" => "arm64",
+        "cpu_description" => "Apple M3 Pro",
+        "processor_count" => 11
+      },
+      "runtime" => %{"name" => "node", "version" => "v25.8.2"},
+      "trace" => %{
+        "trace_id" => "ab08bb5f21f04795ad26d8d3f919379d",
+        "span_id" => "b1ecefa84c94387a"
+      }
+    }
+  end
+
+  defp smoke_sdk do
+    %{
+      "name" => "sentry.javascript.node",
+      "version" => "10.57.0",
+      "packages" => [%{"name" => "npm:@sentry/node", "version" => "10.57.0"}],
+      "integrations" => ["InboundFilters", "NodeFetch", "Express"]
     }
   end
 

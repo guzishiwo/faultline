@@ -1,5 +1,5 @@
 defmodule Faultline.Ingest.RawEvent do
-  use Ecto.Schema
+  use Faultline.Schema
 
   import Ecto.Changeset
 
@@ -17,7 +17,7 @@ defmodule Faultline.Ingest.RawEvent do
 
     belongs_to :project, Project
 
-    timestamps(type: :utc_datetime)
+    timestamps(type: :utc_datetime_usec)
   end
 
   @doc false
