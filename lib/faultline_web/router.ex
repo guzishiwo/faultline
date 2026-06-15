@@ -30,6 +30,7 @@ defmodule FaultlineWeb.Router do
       on_mount: [{FaultlineWeb.UserAuth, :require_authenticated}] do
       live "/projects", ProjectLive.Index, :index
       live "/projects/new", ProjectLive.New, :new
+      live "/issues", IssueLive.Index, :index
       live "/p/:project_slug/settings", ProjectLive.Settings, :edit
       live "/p/:project_slug/usage", ProjectLive.Usage, :show
       live "/p/:project_slug/issues", IssueLive.Index, :index

@@ -83,9 +83,9 @@ defmodule Faultline.Issues do
   end
 
   def list_project_issues(project_id, opts \\ []) do
-    project_id
-    |> project_issues_query()
-    |> search_issues(Keyword.get(opts, :search))
+    opts
+    |> Keyword.put(:project_id, project_id)
+    |> issues_query()
     |> order_issues()
     |> Repo.all()
   end
@@ -93,15 +93,43 @@ defmodule Faultline.Issues do
   def paginate_project_issues(project_id, opts \\ []) do
     limit = Keyword.get(opts, :limit, @default_page_size)
     cursor = Keyword.get(opts, :after)
-    search = Keyword.get(opts, :search)
 
     issues =
-      project_id
-      |> project_issues_query()
-      |> search_issues(search)
+      opts
+      |> Keyword.put(:project_id, project_id)
+      |> issues_query()
       |> after_cursor(cursor)
       |> order_issues()
       |> limit(^(limit + 1))
+      |> Repo.all()
+
+    {page, remaining} = Enum.split(issues, limit)
+
+    %{
+      issues: page,
+      next_cursor: next_cursor(page, remaining)
+    }
+  end
+
+  def list_issues(opts \\ []) do
+    opts
+    |> issues_query()
+    |> order_issues()
+    |> preload(:project)
+    |> Repo.all()
+  end
+
+  def paginate_issues(opts \\ []) do
+    limit = Keyword.get(opts, :limit, @default_page_size)
+    cursor = Keyword.get(opts, :after)
+
+    issues =
+      opts
+      |> issues_query()
+      |> after_cursor(cursor)
+      |> order_issues()
+      |> limit(^(limit + 1))
+      |> preload(:project)
       |> Repo.all()
 
     {page, remaining} = Enum.split(issues, limit)
@@ -120,8 +148,13 @@ defmodule Faultline.Issues do
     Phoenix.PubSub.subscribe(Faultline.PubSub, topic(project_id))
   end
 
+  def subscribe_all do
+    Phoenix.PubSub.subscribe(Faultline.PubSub, all_topic())
+  end
+
   def broadcast_issue_change(%Issue{} = issue) do
     Phoenix.PubSub.broadcast(Faultline.PubSub, topic(issue.project_id), {:issue_changed, issue})
+    Phoenix.PubSub.broadcast(Faultline.PubSub, all_topic(), {:issue_changed, issue})
   end
 
   def issue_matches_search?(%Issue{} = issue, search) when is_binary(search) do
@@ -134,6 +167,15 @@ defmodule Faultline.Issues do
   end
 
   def issue_matches_search?(%Issue{}, _search), do: true
+
+  def issue_matches_filters?(%Issue{} = issue, opts) do
+    project_id = Keyword.get(opts, :project_id)
+    project_matches? = is_nil(project_id) or issue.project_id == project_id
+
+    project_matches? and issue_matches_search?(issue, Keyword.get(opts, :search))
+  end
+
+  def with_project(%Issue{} = issue), do: Repo.preload(issue, :project)
 
   defp create_issue!(repo, event, fingerprint) do
     %Issue{}
@@ -189,9 +231,16 @@ defmodule Faultline.Issues do
     if DateTime.compare(first, second) == :lt, do: second, else: first
   end
 
-  defp project_issues_query(project_id) do
-    where(Issue, [issue], issue.project_id == ^project_id)
+  defp issues_query(opts) do
+    Issue
+    |> filter_project(Keyword.get(opts, :project_id))
+    |> search_issues(Keyword.get(opts, :search))
   end
+
+  defp filter_project(query, nil), do: query
+
+  defp filter_project(query, project_id),
+    do: where(query, [issue], issue.project_id == ^project_id)
 
   defp search_issues(query, nil), do: query
 
@@ -266,4 +315,5 @@ defmodule Faultline.Issues do
   end
 
   defp topic(project_id), do: "project:#{project_id}:issues"
+  defp all_topic, do: "issues:all"
 end

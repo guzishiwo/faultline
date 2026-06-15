@@ -76,7 +76,7 @@ defmodule FaultlineWeb.IssueLive.Show do
           <div class="min-w-0 space-y-3">
             <.link
               id="back-to-issues-link"
-              navigate={~p"/p/#{@project.slug}/issues"}
+              navigate={~p"/issues?project=#{@project.id}"}
               class="inline-flex items-center gap-2 text-sm font-semibold text-base-content/60 transition hover:text-base-content"
             >
               <.icon name="hero-arrow-left" class="size-4" /> Issues

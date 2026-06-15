@@ -48,6 +48,9 @@ defmodule FaultlineWeb.Layouts do
       <div class="flex-none overflow-x-auto">
         <ul class="flex items-center gap-2 px-1">
           <li :if={@current_scope && @current_scope.user}>
+            <.link navigate={~p"/issues?project=-1"} class="btn btn-ghost btn-sm">Issues</.link>
+          </li>
+          <li :if={@current_scope && @current_scope.user}>
             <.link navigate={~p"/projects"} class="btn btn-ghost btn-sm">Projects</.link>
           </li>
           <li :if={@current_scope && @current_scope.user && @current_scope.user.role == "admin"}>

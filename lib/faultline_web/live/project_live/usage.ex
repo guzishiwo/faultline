@@ -37,7 +37,7 @@ defmodule FaultlineWeb.ProjectLive.Usage do
 
           <.link
             id="project-issues-link"
-            navigate={~p"/p/#{@usage.project.slug}/issues"}
+            navigate={~p"/issues?project=#{@usage.project.id}"}
             class="inline-flex w-fit items-center gap-2 rounded-lg bg-base-content px-4 py-2.5 text-sm font-semibold text-base-100 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
           >
             Open triage <.icon name="hero-arrow-right" class="size-4" />

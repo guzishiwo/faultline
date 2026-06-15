@@ -76,17 +76,41 @@ defmodule FaultlineWeb.IssueLiveTest do
 
     view
     |> element("#issue-search-form")
-    |> render_change(%{"search" => %{"q" => target_issue.title}})
+    |> render_change(%{"filters" => %{"q" => target_issue.title, "project" => project.id}})
 
     assert has_element?(view, "#issues-#{target_event.issue_id}")
     refute has_element?(view, "#issues-#{other_event.issue_id}")
 
     view
-    |> element("#clear-issue-search")
+    |> element("#clear-issue-filters")
     |> render_click()
 
     assert has_element?(view, "#issues-#{target_event.issue_id}")
     assert has_element?(view, "#issues-#{other_event.issue_id}")
+  end
+
+  test "global issues filters across projects", %{conn: conn} do
+    first_project = project_fixture()
+    second_project = project_fixture()
+
+    first_event = event_fixture(first_project, "javascript.json")
+    second_event = event_fixture(second_project, "ruby.json")
+
+    {:ok, view, _html} = live(conn, ~p"/issues?project=-1")
+
+    assert has_element?(view, "#issue-search-form")
+    assert has_element?(view, "#issues-#{first_event.issue_id}")
+    assert has_element?(view, "#issues-#{second_event.issue_id}")
+    assert has_element?(view, "#issues-#{first_event.issue_id}", first_project.name)
+    assert has_element?(view, "#issues-#{second_event.issue_id}", second_project.name)
+
+    view
+    |> element("#issue-search-form")
+    |> render_change(%{"filters" => %{"q" => "", "project" => first_project.id}})
+
+    assert_patch(view, ~p"/issues?project=#{first_project.id}")
+    assert has_element?(view, "#issues-#{first_event.issue_id}")
+    refute has_element?(view, "#issues-#{second_event.issue_id}")
   end
 
   test "inserts new issues through PubSub", %{conn: conn} do

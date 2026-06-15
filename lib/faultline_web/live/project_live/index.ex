@@ -72,7 +72,7 @@ defmodule FaultlineWeb.ProjectLive.Index do
               <div class="min-w-0">
                 <.link
                   id={"project-open-link-#{project.id}"}
-                  navigate={~p"/p/#{project.slug}/issues"}
+                  navigate={~p"/issues?project=#{project.id}"}
                   class="group inline-flex max-w-full items-center gap-2"
                 >
                   <span class="truncate text-lg font-semibold text-base-content group-hover:text-orange-600">
@@ -98,7 +98,7 @@ defmodule FaultlineWeb.ProjectLive.Index do
               <div class="flex flex-col justify-center gap-2">
                 <.link
                   id={"project-issues-link-#{project.id}"}
-                  navigate={~p"/p/#{project.slug}/issues"}
+                  navigate={~p"/issues?project=#{project.id}"}
                   class="inline-flex items-center justify-center gap-2 rounded-lg bg-base-content px-4 py-2.5 text-sm font-semibold text-base-100 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
                 >
                   Open triage <.icon name="hero-arrow-right" class="size-4" />
