@@ -141,6 +141,11 @@ mix test
 mix precommit
 ```
 
+## Deployment
+
+See [docs/SINGLE_NODE_DEPLOYMENT.md](docs/SINGLE_NODE_DEPLOYMENT.md) for the default
+single-node deployment shape and runtime cost controls.
+
 ## Product Principles
 
 - Error tracking first, observability later.
@@ -148,3 +153,4 @@ mix precommit
 - Expensive work belongs in background jobs, not request handlers.
 - Large payloads and raw event data should be loaded on demand in the UI.
 - PostgreSQL should be pushed as far as practical before introducing heavier infrastructure.
+- Single-node deployments should remain predictable and cheap by default.

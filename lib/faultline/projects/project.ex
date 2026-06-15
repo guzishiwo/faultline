@@ -4,6 +4,7 @@ defmodule Faultline.Projects.Project do
   import Ecto.Changeset
 
   alias Faultline.Alerts.AlertRule
+  alias Faultline.Retention.ProjectDropRule
 
   @type t :: %__MODULE__{}
 
@@ -15,8 +16,11 @@ defmodule Faultline.Projects.Project do
     field :dsn, :string
     field :rate_limit_max_events, :integer, default: 1000
     field :rate_limit_window_seconds, :integer, default: 60
+    field :retention_days, :integer, default: 30
+    field :retention_event_limit, :integer, default: 10_000
 
     has_many :alert_rules, AlertRule
+    has_many :drop_rules, ProjectDropRule
 
     timestamps(type: :utc_datetime)
   end
@@ -24,11 +28,22 @@ defmodule Faultline.Projects.Project do
   @doc false
   def create_changeset(project, attrs) do
     project
-    |> cast(attrs, [:name, :rate_limit_max_events, :rate_limit_window_seconds])
-    |> validate_required([:name, :rate_limit_max_events, :rate_limit_window_seconds])
+    |> cast(attrs, [
+      :name,
+      :rate_limit_max_events,
+      :rate_limit_window_seconds,
+      :retention_days,
+      :retention_event_limit
+    ])
+    |> validate_required([
+      :name,
+      :rate_limit_max_events,
+      :rate_limit_window_seconds,
+      :retention_days,
+      :retention_event_limit
+    ])
     |> validate_length(:name, min: 2, max: 80)
-    |> validate_number(:rate_limit_max_events, greater_than: 0, less_than_or_equal_to: 1_000_000)
-    |> validate_number(:rate_limit_window_seconds, greater_than: 0, less_than_or_equal_to: 86_400)
+    |> validate_cost_controls()
     |> put_slug()
     |> put_keys()
     |> put_placeholder_dsn()
@@ -41,6 +56,32 @@ defmodule Faultline.Projects.Project do
     project
     |> change(dsn: dsn)
     |> validate_required([:dsn])
+  end
+
+  @doc false
+  def settings_changeset(project, attrs) do
+    project
+    |> cast(attrs, [
+      :rate_limit_max_events,
+      :rate_limit_window_seconds,
+      :retention_days,
+      :retention_event_limit
+    ])
+    |> validate_required([
+      :rate_limit_max_events,
+      :rate_limit_window_seconds,
+      :retention_days,
+      :retention_event_limit
+    ])
+    |> validate_cost_controls()
+  end
+
+  defp validate_cost_controls(changeset) do
+    changeset
+    |> validate_number(:rate_limit_max_events, greater_than: 0, less_than_or_equal_to: 1_000_000)
+    |> validate_number(:rate_limit_window_seconds, greater_than: 0, less_than_or_equal_to: 86_400)
+    |> validate_number(:retention_days, greater_than: 0, less_than_or_equal_to: 3650)
+    |> validate_number(:retention_event_limit, greater_than: 0, less_than_or_equal_to: 10_000_000)
   end
 
   defp put_slug(changeset) do

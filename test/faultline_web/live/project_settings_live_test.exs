@@ -5,6 +5,7 @@ defmodule FaultlineWeb.ProjectSettingsLiveTest do
 
   alias Faultline.Alerts
   alias Faultline.Projects
+  alias Faultline.Retention
 
   setup :register_and_log_in_user
 
@@ -17,9 +18,60 @@ defmodule FaultlineWeb.ProjectSettingsLiveTest do
     assert has_element?(view, "#project-sdk-settings")
     assert has_element?(view, "#project-dsn", project.dsn)
     assert has_element?(view, "#project-ingest-settings")
+    assert has_element?(view, "#project-cost-controls-form")
+    assert has_element?(view, "#drop-rule-form")
+    assert has_element?(view, "#drop-rules")
+    assert has_element?(view, "#project-usage-link")
     assert has_element?(view, "#alert-rules")
     assert has_element?(view, "#alert-rule-form")
     assert has_element?(view, "#alert-rules-empty-state")
+
+    view
+    |> form("#project-cost-controls-form",
+      project: %{
+        rate_limit_max_events: "50",
+        rate_limit_window_seconds: "10",
+        retention_days: "14",
+        retention_event_limit: "500"
+      }
+    )
+    |> render_submit()
+
+    project = Projects.get_project!(project.id)
+    assert project.rate_limit_max_events == 50
+    assert project.rate_limit_window_seconds == 10
+    assert project.retention_days == 14
+    assert project.retention_event_limit == 500
+
+    view
+    |> form("#drop-rule-form",
+      project_drop_rule: %{
+        name: "Ignore noisy timeout",
+        enabled: "true",
+        match_field: "exception_type",
+        match_type: "contains",
+        match_value: "TimeoutError"
+      }
+    )
+    |> render_submit()
+
+    [drop_rule] = Retention.list_project_drop_rules(project.id)
+    assert has_element?(view, "#drop-rules-#{drop_rule.id}", "Ignore noisy timeout")
+
+    view
+    |> element("#toggle-drop-rule-#{drop_rule.id}")
+    |> render_click()
+
+    drop_rule = Retention.get_project_drop_rule!(project.id, drop_rule.id)
+    refute drop_rule.enabled
+    assert has_element?(view, "#drop-rules-#{drop_rule.id}", "disabled")
+
+    view
+    |> element("#delete-drop-rule-#{drop_rule.id}")
+    |> render_click()
+
+    assert Retention.list_project_drop_rules(project.id) == []
+    refute has_element?(view, "#drop-rules-#{drop_rule.id}")
 
     view
     |> form("#alert-rule-form",
@@ -115,6 +167,18 @@ defmodule FaultlineWeb.ProjectSettingsLiveTest do
     {:ok, view, _html} = live(conn, ~p"/projects")
 
     assert has_element?(view, "#project-settings-link-#{project.id}")
+  end
+
+  test "shows project usage page", %{conn: conn} do
+    project = project_fixture()
+
+    {:ok, view, _html} = live(conn, ~p"/projects/#{project.id}/usage")
+
+    assert has_element?(view, "#project-usage-page")
+    assert has_element?(view, "#usage-events", "0")
+    assert has_element?(view, "#usage-raw-events", "0")
+    assert has_element?(view, "#usage-issues", "0")
+    assert has_element?(view, "#usage-retention", "#{project.retention_days} days")
   end
 
   defp project_fixture do

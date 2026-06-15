@@ -24,6 +24,12 @@ config :faultline,
   ecto_repos: [Faultline.Repo],
   generators: [timestamp_type: :utc_datetime]
 
+config :faultline, :ingest, max_envelope_bytes: 1_000_000
+
+config :faultline, Faultline.Retention.CleanupWorker,
+  enabled: true,
+  interval_ms: 3_600_000
+
 # Configure the endpoint
 config :faultline, FaultlineWeb.Endpoint,
   url: [host: "localhost"],

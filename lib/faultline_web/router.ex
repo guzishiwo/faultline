@@ -31,6 +31,7 @@ defmodule FaultlineWeb.Router do
       live "/projects", ProjectLive.Index, :index
       live "/projects/new", ProjectLive.New, :new
       live "/projects/:project_id/settings", ProjectLive.Settings, :edit
+      live "/projects/:project_id/usage", ProjectLive.Usage, :show
       live "/projects/:project_id/issues", IssueLive.Index, :index
       live "/projects/:project_id/issues/:id", IssueLive.Show, :show
     end

@@ -104,12 +104,12 @@ Goal: notify teams about new and regressed issues.
 
 Goal: keep single-node deployments predictable and cheap.
 
-- [ ] Add per-project retention days.
-- [ ] Add event-count retention cap.
-- [ ] Add scheduled cleanup job.
-- [ ] Add project usage page.
-- [ ] Add drop rules for noisy event classes.
-- [ ] Add request-size limits and rate-limit responses.
+- [x] Add per-project retention days.
+- [x] Add event-count retention cap.
+- [x] Add scheduled cleanup job.
+- [x] Add project usage page.
+- [x] Add drop rules for noisy event classes.
+- [x] Add request-size limits and rate-limit responses.
 
 ## Milestone 8: Production Packaging
 

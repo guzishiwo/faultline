@@ -6,6 +6,9 @@ defmodule Faultline.Projects do
   import Ecto.Query, warn: false
 
   alias Ecto.Multi
+  alias Faultline.Events.Event
+  alias Faultline.Ingest.RawEvent
+  alias Faultline.Issues.Issue
   alias Faultline.Projects.DSN
   alias Faultline.Projects.Project
   alias Faultline.Repo
@@ -49,6 +52,41 @@ defmodule Faultline.Projects do
   """
   def change_project(%Project{} = project, attrs \\ %{}) do
     Project.create_changeset(project, attrs)
+  end
+
+  def update_project_settings(%Project{} = project, attrs) do
+    project
+    |> Project.settings_changeset(attrs)
+    |> Repo.update()
+  end
+
+  def change_project_settings(%Project{} = project, attrs \\ %{}) do
+    Project.settings_changeset(project, attrs)
+  end
+
+  def get_project_usage!(id) do
+    project = get_project!(id)
+
+    %{
+      project: project,
+      raw_event_count: count_project(RawEvent, project.id),
+      event_count: count_project(Event, project.id),
+      issue_count: count_project(Issue, project.id),
+      earliest_event_at: aggregate_project(Event, project.id, :min, :occurred_at),
+      latest_event_at: aggregate_project(Event, project.id, :max, :occurred_at)
+    }
+  end
+
+  defp count_project(schema, project_id) do
+    schema
+    |> where([record], record.project_id == ^project_id)
+    |> Repo.aggregate(:count)
+  end
+
+  defp aggregate_project(schema, project_id, aggregate, field) do
+    schema
+    |> where([record], record.project_id == ^project_id)
+    |> Repo.aggregate(aggregate, field)
   end
 
   defp configured_dsn_base_url do

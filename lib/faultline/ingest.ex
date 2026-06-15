@@ -3,10 +3,13 @@ defmodule Faultline.Ingest do
   Accepts Sentry-compatible ingest payloads and stores raw events.
   """
 
+  import Ecto.Query, warn: false
+
   alias Faultline.Ingest.RawEvent
   alias Faultline.Events
   alias Faultline.Projects.Project
   alias Faultline.Repo
+  alias Faultline.Retention
   alias Faultline.Sentry.Auth
 
   @event_item_type "event"
@@ -31,13 +34,24 @@ defmodule Faultline.Ingest do
   Stores a raw event submitted to `/api/:project_id/store/`.
   """
   def accept_store(%Project{} = project, payload, auth) when is_map(payload) do
-    create_raw_event(project, %{
-      event_id: event_id(payload) || random_event_id(),
-      source: "store",
-      payload_type: @event_item_type,
-      payload: payload,
-      auth: encode_auth(auth)
-    })
+    event_id = event_id(payload) || random_event_id()
+
+    cond do
+      Retention.dropped_by_rule?(project, payload) ->
+        {:ok, %{event_id: event_id, stored?: false}}
+
+      not rate_limit_allows?(project, 1) ->
+        {:error, :rate_limited}
+
+      true ->
+        create_raw_event(project, %{
+          event_id: event_id,
+          source: "store",
+          payload_type: @event_item_type,
+          payload: payload,
+          auth: encode_auth(auth)
+        })
+    end
   end
 
   def accept_store(%Project{}, _payload, _auth), do: {:error, :invalid_payload}
@@ -49,17 +63,23 @@ defmodule Faultline.Ingest do
   """
   def accept_envelope(%Project{} = project, body, auth) when is_binary(body) do
     with {:ok, envelope_header, items} <- decode_envelope(body) do
-      items
-      |> Enum.filter(&(&1.type == @event_item_type))
-      |> Enum.reduce_while({:ok, []}, fn item, {:ok, raw_events} ->
-        case create_envelope_event(project, envelope_header, item, auth) do
-          {:ok, raw_event} -> {:cont, {:ok, [raw_event | raw_events]}}
-          {:error, reason} -> {:halt, {:error, reason}}
+      event_items = Enum.filter(items, &(&1.type == @event_item_type))
+
+      if rate_limit_allows?(project, length(event_items)) do
+        event_items
+        |> Enum.reduce_while({:ok, []}, fn item, {:ok, raw_events} ->
+          case create_envelope_event(project, envelope_header, item, auth) do
+            {:ok, nil} -> {:cont, {:ok, raw_events}}
+            {:ok, raw_event} -> {:cont, {:ok, [raw_event | raw_events]}}
+            {:error, reason} -> {:halt, {:error, reason}}
+          end
+        end)
+        |> case do
+          {:ok, raw_events} -> {:ok, Enum.reverse(raw_events)}
+          {:error, reason} -> {:error, reason}
         end
-      end)
-      |> case do
-        {:ok, raw_events} -> {:ok, Enum.reverse(raw_events)}
-        {:error, reason} -> {:error, reason}
+      else
+        {:error, :rate_limited}
       end
     end
   end
@@ -69,18 +89,36 @@ defmodule Faultline.Ingest do
   defp create_envelope_event(project, envelope_header, item, auth) do
     with {:ok, payload} <- Jason.decode(item.payload),
          true <- is_map(payload) do
-      event_id = event_id(payload) || event_id(envelope_header)
+      event_id = event_id(payload) || event_id(envelope_header) || random_event_id()
 
-      create_raw_event(project, %{
-        event_id: event_id || random_event_id(),
-        source: "envelope",
-        payload_type: @event_item_type,
-        payload: payload,
-        auth: encode_auth(auth)
-      })
+      if Retention.dropped_by_rule?(project, payload) do
+        {:ok, nil}
+      else
+        create_raw_event(project, %{
+          event_id: event_id,
+          source: "envelope",
+          payload_type: @event_item_type,
+          payload: payload,
+          auth: encode_auth(auth)
+        })
+      end
     else
       _ -> {:error, :invalid_payload}
     end
+  end
+
+  defp rate_limit_allows?(_project, event_count) when event_count <= 0, do: true
+
+  defp rate_limit_allows?(project, event_count) do
+    window_start = DateTime.add(DateTime.utc_now(), -project.rate_limit_window_seconds, :second)
+
+    recent_count =
+      RawEvent
+      |> where([raw_event], raw_event.project_id == ^project.id)
+      |> where([raw_event], raw_event.received_at >= ^window_start)
+      |> Repo.aggregate(:count)
+
+    recent_count + event_count <= project.rate_limit_max_events
   end
 
   defp create_raw_event(project, attrs) do

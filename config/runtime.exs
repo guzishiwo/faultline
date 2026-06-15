@@ -36,10 +36,16 @@ if config_env() == :prod do
   config :faultline, Faultline.Repo,
     # ssl: true,
     url: database_url,
-    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
-    # For machines with several cores, consider starting multiple pools of `pool_size`
-    # pool_count: 4,
+    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "5"),
+    queue_target: String.to_integer(System.get_env("DB_QUEUE_TARGET_MS") || "50"),
+    queue_interval: String.to_integer(System.get_env("DB_QUEUE_INTERVAL_MS") || "1000"),
     socket_options: maybe_ipv6
+
+  config :faultline, :ingest,
+    max_envelope_bytes: String.to_integer(System.get_env("MAX_ENVELOPE_BYTES") || "1000000")
+
+  config :faultline, Faultline.Retention.CleanupWorker,
+    interval_ms: String.to_integer(System.get_env("RETENTION_CLEANUP_INTERVAL_MS") || "3600000")
 
   # The secret key base is used to sign/encrypt cookies and other secrets.
   # A default value is used in config/dev.exs and config/test.exs but you
