@@ -1,61 +1,16 @@
-<Layouts.flash_group flash={@flash} />
-
-<div class="min-h-screen bg-base-100 text-base-content">
-  <header class="border-b border-base-300 px-4 py-4 sm:px-6 lg:px-8">
-    <nav class="mx-auto flex max-w-7xl items-center justify-between gap-4">
-      <a href="/" class="flex items-center gap-3">
-        <span class="flex size-9 items-center justify-center rounded-lg bg-base-content text-sm font-bold text-base-100">
-          F
-        </span>
-        <span class="text-base font-semibold tracking-normal">Faultline</span>
-      </a>
-
-      <div class="flex items-center gap-2">
-        <Layouts.theme_toggle />
-        <.link
-          :if={@current_scope && @current_scope.user}
-          navigate={~p"/issues?project=-1"}
-          class="rounded-lg px-3 py-2 text-sm font-semibold transition hover:bg-base-200"
-        >
-          Issues
-        </.link>
-        <.link
-          :if={@current_scope && @current_scope.user && @current_scope.user.role == "admin"}
-          navigate={~p"/admin/users"}
-          class="rounded-lg px-3 py-2 text-sm font-semibold transition hover:bg-base-200"
-        >
-          Admin
-        </.link>
-        <.link
-          :if={!@current_scope || !@current_scope.user}
-          navigate={~p"/users/log-in"}
-          class="rounded-lg px-3 py-2 text-sm font-semibold transition hover:bg-base-200"
-        >
-          Log in
-        </.link>
-        <.link
-          :if={!@current_scope || !@current_scope.user}
-          navigate={~p"/users/register"}
-          class="rounded-lg bg-base-content px-3 py-2 text-sm font-semibold text-base-100 transition hover:-translate-y-0.5"
-        >
-          Register
-        </.link>
-      </div>
-    </nav>
-  </header>
-
-  <main class="px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
-    <div class="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[minmax(0,1fr)_24rem]">
-      <section class="space-y-8">
+<Layouts.app flash={@flash} current_scope={@current_scope}>
+  <section class="overflow-hidden rounded-lg border border-base-300 bg-base-100">
+    <div class="grid gap-0 lg:grid-cols-[minmax(0,1.45fr)_minmax(24rem,0.75fr)]">
+      <div class="space-y-8 p-6 sm:p-8 lg:p-12">
         <div class="space-y-5">
           <p class="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
             Sentry SDK compatible error tracking
           </p>
           <h1 class="max-w-4xl text-4xl font-semibold leading-tight tracking-normal sm:text-6xl">
-            Lightweight error triage for teams that do not want a heavy stack.
+            Self-hosted error tracking in one Docker command.
           </h1>
           <p class="max-w-2xl text-base leading-7 text-base-content/70 sm:text-lg">
-            Faultline keeps the ingest path simple, the UI realtime, and the infrastructure small: Phoenix, LiveView, and SQLite first.
+            Faultline is the focused error tracker for small teams that want Sentry-compatible ingest, SQLite storage, and a fast issue inbox without running an observability stack.
           </p>
         </div>
 
@@ -68,6 +23,20 @@
             <.icon name="hero-magnifying-glass" class="size-4" /> Open issues
           </.link>
           <.link
+            :if={@current_scope && @current_scope.user}
+            navigate={~p"/projects"}
+            class="inline-flex items-center gap-2 rounded-lg border border-base-300 bg-base-100 px-4 py-2.5 text-sm font-semibold transition hover:-translate-y-0.5 hover:bg-base-200"
+          >
+            <.icon name="hero-briefcase" class="size-4" /> Projects
+          </.link>
+          <.link
+            :if={@current_scope && @current_scope.user && @current_scope.user.role == "admin"}
+            navigate={~p"/admin/users"}
+            class="inline-flex items-center gap-2 rounded-lg border border-base-300 bg-base-100 px-4 py-2.5 text-sm font-semibold transition hover:-translate-y-0.5 hover:bg-base-200"
+          >
+            <.icon name="hero-shield-check" class="size-4" /> Admin
+          </.link>
+          <.link
             :if={!@current_scope || !@current_scope.user}
             navigate={~p"/users/register"}
             class="inline-flex items-center gap-2 rounded-lg bg-base-content px-4 py-2.5 text-sm font-semibold text-base-100 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
@@ -77,86 +46,162 @@
           <.link
             :if={!@current_scope || !@current_scope.user}
             navigate={~p"/users/log-in"}
-            class="inline-flex items-center gap-2 rounded-lg border border-base-300 px-4 py-2.5 text-sm font-semibold transition hover:bg-base-200"
+            class="inline-flex items-center gap-2 rounded-lg border border-base-300 bg-base-100 px-4 py-2.5 text-sm font-semibold transition hover:-translate-y-0.5 hover:bg-base-200"
           >
             <.icon name="hero-arrow-right-on-rectangle" class="size-4" /> Log in
           </.link>
-          <.link
-            :if={@current_scope && @current_scope.user && @current_scope.user.role == "admin"}
-            navigate={~p"/admin/users"}
-            class="inline-flex items-center gap-2 rounded-lg border border-base-300 px-4 py-2.5 text-sm font-semibold transition hover:bg-base-200"
-          >
-            <.icon name="hero-shield-check" class="size-4" /> Admin controls
-          </.link>
         </div>
+      </div>
 
-        <div class="grid gap-4 sm:grid-cols-3">
-          <div class="rounded-lg border border-base-300 bg-base-100 p-4">
-            <p class="text-2xl font-semibold">DSN</p>
-            <p class="mt-2 text-sm leading-6 text-base-content/65">
-              Existing SDKs can point at a project endpoint.
-            </p>
+      <aside class="border-t border-base-300 bg-base-200/50 p-5 sm:p-8 lg:flex lg:items-center lg:border-l lg:border-t-0">
+        <div class="w-full rounded-lg border border-base-300 bg-base-content p-4 text-base-100 shadow-xl shadow-base-content/10 sm:p-5">
+          <div class="flex items-center justify-between gap-4 border-b border-base-100/10 pb-3">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-base-100/45">
+                Run locally
+              </p>
+              <p class="mt-1 text-sm font-semibold text-base-100/80">$ docker run</p>
+            </div>
+            <span class="flex items-center gap-1.5 rounded-full border border-base-100/10 px-2.5 py-1 text-xs font-semibold text-base-100/55">
+              <span class="size-1.5 rounded-full bg-primary"></span> ready
+            </span>
           </div>
-          <div class="rounded-lg border border-base-300 bg-base-100 p-4">
-            <p class="text-2xl font-semibold">Live</p>
-            <p class="mt-2 text-sm leading-6 text-base-content/65">
-              Issues update through LiveView and PubSub.
-            </p>
-          </div>
-          <div class="rounded-lg border border-base-300 bg-base-100 p-4">
-            <p class="text-2xl font-semibold">Small</p>
-            <p class="mt-2 text-sm leading-6 text-base-content/65">
-              SQLite is enough for the open-source V1.0 path.
-            </p>
+
+          <pre class="mt-4 whitespace-pre-wrap break-words rounded-lg border border-base-100/10 bg-black/30 p-4 font-mono text-sm leading-7 text-base-100"><code>docker run -p 4010:4010 -v faultline-data:/data faultline</code></pre>
+
+          <div class="mt-4 flex flex-wrap gap-2 text-sm text-base-100/75">
+            <span class="inline-flex items-center gap-2 rounded-full border border-base-100/10 bg-base-100/5 px-3 py-1.5">
+              <.icon name="hero-cube" class="size-4 text-primary" /> One container
+            </span>
+            <span class="inline-flex items-center gap-2 rounded-full border border-base-100/10 bg-base-100/5 px-3 py-1.5">
+              <.icon name="hero-circle-stack" class="size-4 text-primary" /> One SQLite volume
+            </span>
           </div>
         </div>
-      </section>
-
-      <aside class="space-y-4">
-        <section class="rounded-lg border border-base-300 bg-base-200/60 p-5">
-          <h2 class="text-sm font-semibold uppercase tracking-[0.14em] text-base-content/60">
-            Current build
-          </h2>
-          <div class="mt-5 space-y-3 text-sm">
-            <div class="flex items-center justify-between gap-4">
-              <span class="text-base-content/65">Users</span>
-              <span class="font-semibold">enabled</span>
-            </div>
-            <div class="flex items-center justify-between gap-4">
-              <span class="text-base-content/65">Admin controls</span>
-              <span class="font-semibold">role based</span>
-            </div>
-            <div class="flex items-center justify-between gap-4">
-              <span class="text-base-content/65">Ingest</span>
-              <span class="font-semibold">store + envelope</span>
-            </div>
-            <div class="flex items-center justify-between gap-4">
-              <span class="text-base-content/65">UI</span>
-              <span class="font-semibold">LiveView</span>
-            </div>
-          </div>
-        </section>
-
-        <section class="rounded-lg border border-base-300 bg-base-100 p-5">
-          <h2 class="text-sm font-semibold uppercase tracking-[0.14em] text-base-content/60">
-            Next tasks
-          </h2>
-          <ul class="mt-5 space-y-3 text-sm leading-6 text-base-content/70">
-            <li class="flex gap-3">
-              <.icon name="hero-check-circle" class="mt-1 size-4 text-green-600" />
-              <span>Protect project and issue workflows behind login.</span>
-            </li>
-            <li class="flex gap-3">
-              <.icon name="hero-check-circle" class="mt-1 size-4 text-green-600" />
-              <span>Add admin user management.</span>
-            </li>
-            <li class="flex gap-3">
-              <.icon name="hero-circle-stack" class="mt-1 size-4 text-base-content/40" />
-              <span>Add organization and team membership.</span>
-            </li>
-          </ul>
-        </section>
       </aside>
     </div>
-  </main>
-</div>
+  </section>
+
+  <section class="grid gap-4 lg:grid-cols-3">
+    <div class="rounded-lg border border-base-300 bg-base-100 p-5">
+      <.icon name="hero-signal" class="size-5 text-primary" />
+      <h2 class="mt-4 text-base font-semibold">Connect existing SDKs</h2>
+      <p class="mt-2 text-sm leading-6 text-base-content/65">
+        Keep your app instrumentation. Point a Sentry-compatible DSN at Faultline and start receiving errors.
+      </p>
+    </div>
+    <div class="rounded-lg border border-base-300 bg-base-100 p-5">
+      <.icon name="hero-inbox-stack" class="size-5 text-primary" />
+      <h2 class="mt-4 text-base font-semibold">See grouped issues</h2>
+      <p class="mt-2 text-sm leading-6 text-base-content/65">
+        Turn repeated exceptions into a small issue inbox your team can scan, resolve, and ignore.
+      </p>
+    </div>
+    <div class="rounded-lg border border-base-300 bg-base-100 p-5">
+      <.icon name="hero-lock-closed" class="size-5 text-primary" />
+      <h2 class="mt-4 text-base font-semibold">Keep ownership of your data</h2>
+      <p class="mt-2 text-sm leading-6 text-base-content/65">
+        Store events in your own SQLite volume and keep the default deployment understandable.
+      </p>
+    </div>
+  </section>
+
+  <section class="overflow-hidden rounded-lg border border-base-300 bg-base-100">
+    <div class="grid gap-0 lg:grid-cols-[0.8fr_1.2fr]">
+      <div class="border-b border-base-300 p-5 sm:p-6 lg:border-b-0 lg:border-r">
+        <p class="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
+          What you get after install
+        </p>
+        <h2 class="mt-3 text-2xl font-semibold tracking-normal">
+          Enough context to decide what needs attention.
+        </h2>
+        <p class="mt-3 text-sm leading-6 text-base-content/65">
+          Faultline keeps the first workflow narrow: receive errors, group them into issues, inspect the event, and quiet down noise.
+        </p>
+      </div>
+
+      <div class="grid gap-4 bg-base-200/50 p-4 sm:p-5 lg:grid-cols-[1fr_0.9fr]">
+        <div class="rounded-lg border border-base-300 bg-base-100 p-4 shadow-sm">
+          <div class="flex items-center justify-between gap-3">
+            <div>
+              <p class="text-sm font-semibold">Issue inbox</p>
+              <p class="mt-1 text-xs text-base-content/55">Grouped errors, counts, status</p>
+            </div>
+            <span class="rounded-full bg-primary/15 px-2.5 py-1 text-xs font-semibold text-primary">
+              live
+            </span>
+          </div>
+
+          <div class="mt-4 space-y-2">
+            <div class="rounded-lg border border-base-300 bg-base-200/60 p-3">
+              <div class="flex items-center justify-between gap-3">
+                <p class="text-sm font-semibold">TypeError in checkout</p>
+                <span class="text-xs font-semibold text-error">38</span>
+              </div>
+              <p class="mt-1 text-xs text-base-content/55">unresolved · prod · 4 users</p>
+            </div>
+            <div class="rounded-lg border border-base-300 bg-base-100 p-3">
+              <div class="flex items-center justify-between gap-3">
+                <p class="text-sm font-semibold">RuntimeError in worker</p>
+                <span class="text-xs font-semibold text-warning">12</span>
+              </div>
+              <p class="mt-1 text-xs text-base-content/55">ignored · staging · 1 user</p>
+            </div>
+            <div class="rounded-lg border border-base-300 bg-base-100 p-3">
+              <div class="flex items-center justify-between gap-3">
+                <p class="text-sm font-semibold">KeyError in billing</p>
+                <span class="text-xs font-semibold text-base-content/55">7</span>
+              </div>
+              <p class="mt-1 text-xs text-base-content/55">resolved · release 1.4.2</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid gap-4">
+          <div class="rounded-lg border border-base-300 bg-base-100 p-4 shadow-sm">
+            <div class="flex items-center gap-2">
+              <.icon name="hero-document-magnifying-glass" class="size-4 text-primary" />
+              <p class="text-sm font-semibold">Event detail</p>
+            </div>
+            <div class="mt-4 rounded-lg bg-base-content p-3 font-mono text-xs leading-6 text-base-100">
+              <p>app/checkout.ex:42</p>
+              <p class="text-base-100/55">release: 1.4.2</p>
+              <p class="text-base-100/55">environment: prod</p>
+            </div>
+          </div>
+
+          <div class="rounded-lg border border-base-300 bg-base-100 p-4 shadow-sm">
+            <div class="flex items-center gap-2">
+              <.icon name="hero-adjustments-horizontal" class="size-4 text-primary" />
+              <p class="text-sm font-semibold">Noise control</p>
+            </div>
+            <div class="mt-4 grid gap-2 text-xs font-semibold text-base-content/65">
+              <span class="rounded-full border border-base-300 bg-base-200/60 px-3 py-2">
+                Retain 30 days
+              </span>
+              <span class="rounded-full border border-base-300 bg-base-200/60 px-3 py-2">
+                Drop noisy classes
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="rounded-lg border border-base-300 bg-base-200/60 p-5 sm:p-6">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <p class="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
+          Faultline principle
+        </p>
+        <h2 class="mt-2 text-2xl font-semibold tracking-normal">
+          Error tracking first. Heavy observability later.
+        </h2>
+      </div>
+      <p class="max-w-xl text-sm leading-6 text-base-content/65">
+        The default path stays small on purpose: enough to catch production errors, group them, and decide what needs attention.
+      </p>
+    </div>
+  </section>
+</Layouts.app>
