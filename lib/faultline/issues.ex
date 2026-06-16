@@ -171,8 +171,11 @@ defmodule Faultline.Issues do
   def issue_matches_filters?(%Issue{} = issue, opts) do
     project_id = Keyword.get(opts, :project_id)
     project_matches? = is_nil(project_id) or issue.project_id == project_id
+    status_matches? = status_matches?(issue, Keyword.get(opts, :status))
+    last_seen_matches? = last_seen_matches?(issue, Keyword.get(opts, :last_seen_since))
 
-    project_matches? and issue_matches_search?(issue, Keyword.get(opts, :search))
+    project_matches? and status_matches? and last_seen_matches? and
+      issue_matches_search?(issue, Keyword.get(opts, :search))
   end
 
   def with_project(%Issue{} = issue), do: Repo.preload(issue, :project)
@@ -234,6 +237,8 @@ defmodule Faultline.Issues do
   defp issues_query(opts) do
     Issue
     |> filter_project(Keyword.get(opts, :project_id))
+    |> filter_status(Keyword.get(opts, :status))
+    |> filter_last_seen_since(Keyword.get(opts, :last_seen_since))
     |> search_issues(Keyword.get(opts, :search))
   end
 
@@ -241,6 +246,17 @@ defmodule Faultline.Issues do
 
   defp filter_project(query, project_id),
     do: where(query, [issue], issue.project_id == ^project_id)
+
+  defp filter_status(query, nil), do: query
+  defp filter_status(query, ""), do: query
+
+  defp filter_status(query, status) when is_binary(status),
+    do: where(query, [issue], issue.status == ^status)
+
+  defp filter_last_seen_since(query, nil), do: query
+
+  defp filter_last_seen_since(query, %DateTime{} = since),
+    do: where(query, [issue], issue.last_seen_at >= ^since)
 
   defp search_issues(query, nil), do: query
 
@@ -270,6 +286,16 @@ defmodule Faultline.Issues do
     |> String.replace("\\", "\\\\")
     |> String.replace("%", "\\%")
     |> String.replace("_", "\\_")
+  end
+
+  defp status_matches?(%Issue{}, nil), do: true
+  defp status_matches?(%Issue{}, ""), do: true
+  defp status_matches?(%Issue{} = issue, status), do: issue.status == status
+
+  defp last_seen_matches?(%Issue{}, nil), do: true
+
+  defp last_seen_matches?(%Issue{} = issue, %DateTime{} = since) do
+    DateTime.compare(issue.last_seen_at, since) != :lt
   end
 
   defp after_cursor(query, nil), do: query

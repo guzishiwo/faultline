@@ -90,8 +90,8 @@ defmodule FaultlineWeb.IssueLiveTest do
   end
 
   test "global issues filters across projects", %{conn: conn} do
-    first_project = project_fixture()
-    second_project = project_fixture()
+    first_project = project_fixture(%{"platform" => "react"})
+    second_project = project_fixture(%{"platform" => "flutter"})
 
     first_event = event_fixture(first_project, "javascript.json")
     second_event = event_fixture(second_project, "ruby.json")
@@ -103,14 +103,53 @@ defmodule FaultlineWeb.IssueLiveTest do
     assert has_element?(view, "#issues-#{second_event.issue_id}")
     assert has_element?(view, "#issues-#{first_event.issue_id}", first_project.name)
     assert has_element?(view, "#issues-#{second_event.issue_id}", second_project.name)
+    assert has_element?(view, "#project-filter-menu")
+    assert has_element?(view, "#project-filter-logo-#{first_project.id}", "R")
+    assert has_element?(view, "#project-filter-logo-#{second_project.id}", "F")
+    assert has_element?(view, "#issue-project-logo-#{first_event.issue_id}", "R")
 
     view
     |> element("#issue-search-form")
-    |> render_change(%{"filters" => %{"q" => "", "project" => first_project.id}})
+    |> render_change(%{
+      "filters" => %{
+        "q" => "",
+        "project" => first_project.id,
+        "status" => "all",
+        "time" => "all"
+      }
+    })
 
     assert_patch(view, ~p"/issues?project=#{first_project.id}")
     assert has_element?(view, "#issues-#{first_event.issue_id}")
     refute has_element?(view, "#issues-#{second_event.issue_id}")
+  end
+
+  test "global issues filters by status", %{conn: conn} do
+    resolved_project = project_fixture(%{"platform" => "browser_javascript"})
+    unresolved_project = project_fixture(%{"platform" => "rails"})
+
+    resolved_event = event_fixture(resolved_project, "javascript.json")
+    unresolved_event = event_fixture(unresolved_project, "ruby.json")
+
+    resolved_issue = Repo.get!(Issue, resolved_event.issue_id)
+    assert {:ok, _issue} = Faultline.Issues.update_issue_status(resolved_issue, "resolved")
+
+    {:ok, view, _html} = live(conn, ~p"/issues?project=-1")
+
+    view
+    |> element("#issue-search-form")
+    |> render_change(%{
+      "filters" => %{
+        "q" => "",
+        "project" => "-1",
+        "status" => "resolved",
+        "time" => "all"
+      }
+    })
+
+    assert_patch(view, ~p"/issues?project=-1&status=resolved")
+    assert has_element?(view, "#issues-#{resolved_event.issue_id}")
+    refute has_element?(view, "#issues-#{unresolved_event.issue_id}")
   end
 
   test "inserts new issues through PubSub", %{conn: conn} do
@@ -377,11 +416,11 @@ defmodule FaultlineWeb.IssueLiveTest do
     }
   end
 
-  defp project_fixture do
+  defp project_fixture(attrs \\ %{}) do
     assert {:ok, project} =
-             Projects.create_project(%{"name" => unique_project_name()},
-               dsn_base_url: "https://errors.example.com"
-             )
+             %{"name" => unique_project_name()}
+             |> Map.merge(attrs)
+             |> Projects.create_project(dsn_base_url: "https://errors.example.com")
 
     project
   end

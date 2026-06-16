@@ -254,6 +254,47 @@ defmodule Faultline.IssuesTest do
 
       refute other_issue in page.issues
     end
+
+    test "filters issues by status and last seen time" do
+      project = project_fixture()
+
+      older =
+        "javascript.json"
+        |> fixture_payload()
+        |> Map.put("timestamp", "2026-06-14T15:00:00Z")
+        |> normalize_payload(project)
+
+      newer =
+        "ruby.json"
+        |> fixture_payload()
+        |> Map.put("timestamp", "2026-06-16T15:00:00Z")
+        |> normalize_payload(project)
+
+      older_issue = Repo.get!(Issue, older.issue_id)
+      newer_issue = Repo.get!(Issue, newer.issue_id)
+
+      assert {:ok, resolved_issue} = Issues.update_issue_status(older_issue, "resolved")
+
+      assert [^resolved_issue] = Issues.list_project_issues(project.id, status: "resolved")
+
+      page =
+        Issues.paginate_project_issues(project.id,
+          last_seen_since: ~U[2026-06-15 00:00:00.000000Z]
+        )
+
+      assert page.issues == [newer_issue]
+      assert page.next_cursor == nil
+
+      assert Issues.issue_matches_filters?(newer_issue,
+               status: "unresolved",
+               last_seen_since: ~U[2026-06-15 00:00:00.000000Z]
+             )
+
+      refute Issues.issue_matches_filters?(resolved_issue,
+               status: "unresolved",
+               last_seen_since: ~U[2026-06-15 00:00:00.000000Z]
+             )
+    end
   end
 
   defp normalize_payload(payload, project) do
