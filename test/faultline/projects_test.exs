@@ -11,6 +11,7 @@ defmodule Faultline.ProjectsTest do
                Projects.create_project(
                  %{
                    "name" => "Checkout API",
+                   "platform" => "react",
                    "rate_limit_max_events" => "250",
                    "rate_limit_window_seconds" => "30"
                  },
@@ -19,6 +20,7 @@ defmodule Faultline.ProjectsTest do
 
       assert project.name == "Checkout API"
       assert project.slug == "checkout-api"
+      assert project.platform == "react"
       assert project.rate_limit_max_events == 250
       assert project.rate_limit_window_seconds == 30
       assert String.at(project.id, 14) == "7"
@@ -52,6 +54,7 @@ defmodule Faultline.ProjectsTest do
                Projects.create_project(
                  %{
                    "name" => "",
+                   "platform" => "unknown",
                    "rate_limit_max_events" => "0",
                    "rate_limit_window_seconds" => "0"
                  },
@@ -59,8 +62,18 @@ defmodule Faultline.ProjectsTest do
                )
 
       assert "can't be blank" in errors_on(changeset).name
+      assert "is invalid" in errors_on(changeset).platform
       assert "must be greater than 0" in errors_on(changeset).rate_limit_max_events
       assert "must be greater than 0" in errors_on(changeset).rate_limit_window_seconds
+    end
+
+    test "create_project/2 defaults to the unsure platform" do
+      assert {:ok, project} =
+               Projects.create_project(%{"name" => "Default Platform"},
+                 dsn_base_url: "https://errors.example.com"
+               )
+
+      assert project.platform == "other"
     end
   end
 

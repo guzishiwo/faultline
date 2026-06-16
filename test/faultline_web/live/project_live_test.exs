@@ -18,11 +18,15 @@ defmodule FaultlineWeb.ProjectLiveTest do
   test "creates a project from the form", %{conn: conn} do
     {:ok, view, _html} = live(conn, ~p"/projects/new")
 
+    assert has_element?(view, "#project-platform-picker")
+    assert has_element?(view, "#platform-option-react")
+
     {:ok, index_view, _html} =
       view
       |> form("#project-form",
         project: %{
           name: "Web checkout",
+          platform: "react",
           rate_limit_max_events: "500",
           rate_limit_window_seconds: "60"
         }
@@ -32,7 +36,9 @@ defmodule FaultlineWeb.ProjectLiveTest do
 
     project = Repo.one!(Project)
 
+    assert project.platform == "react"
     assert has_element?(index_view, "#projects-#{project.id}")
+    assert has_element?(index_view, "#project-platform-#{project.id}", "React")
     assert has_element?(index_view, "#project-open-link-#{project.id}")
     assert has_element?(index_view, "#project-issues-link-#{project.id}")
     assert has_element?(index_view, "#project-settings-link-#{project.id}")
@@ -54,5 +60,26 @@ defmodule FaultlineWeb.ProjectLiveTest do
 
     assert has_element?(view, "#project-form")
     assert Repo.aggregate(Project, :count) == 0
+  end
+
+  test "filters platform options", %{conn: conn} do
+    {:ok, view, _html} = live(conn, ~p"/projects/new")
+
+    assert has_element?(view, "#platform-option-react")
+
+    view
+    |> form("#project-form",
+      platform_query: "rails",
+      project: %{
+        name: "Web checkout",
+        platform: "other",
+        rate_limit_max_events: "500",
+        rate_limit_window_seconds: "60"
+      }
+    )
+    |> render_change()
+
+    assert has_element?(view, "#platform-option-rails")
+    refute has_element?(view, "#platform-option-react")
   end
 end

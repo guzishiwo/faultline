@@ -59,6 +59,10 @@ defmodule Faultline.Projects do
     Project.create_changeset(project, attrs)
   end
 
+  def project_platform_categories, do: Project.platform_categories()
+  def project_platforms, do: Project.platforms()
+  def project_platform_label(platform_id), do: Project.platform_label(platform_id)
+
   def update_project_settings(%Project{} = project, attrs) do
     project
     |> Project.settings_changeset(attrs)

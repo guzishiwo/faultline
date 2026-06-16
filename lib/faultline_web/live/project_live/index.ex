@@ -86,6 +86,10 @@ defmodule FaultlineWeb.ProjectLive.Index do
                 <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-base-content/55">
                   <span class="font-mono text-xs">{project.slug}</span>
                   <span aria-hidden="true">·</span>
+                  <span id={"project-platform-#{project.id}"}>
+                    {Projects.project_platform_label(project.platform)}
+                  </span>
+                  <span aria-hidden="true">·</span>
                   <span>
                     <span class="font-semibold text-base-content">
                       {project.rate_limit_max_events}
