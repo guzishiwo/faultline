@@ -274,6 +274,12 @@ defmodule FaultlineWeb.IssueLiveTest do
     assert has_element?(view, "#stack-frame-1-source", "return charge")
     assert has_element?(view, "#stack-frame-1-source code[phx-hook='CodeHighlight']")
     assert has_element?(view, "#stack-frame-1-source code[data-prism-language='javascript']")
+
+    assert has_element?(
+             view,
+             "#copy-stacktrace-#{newer_event.id}[phx-hook='ClipboardCopy'][data-copy*='submitOrder'][data-copy*='app.js:42:13']"
+           )
+
     assert has_element?(view, "#stack-frame-1-var-cart", "cart-123")
     assert has_element?(view, "#stack-frame-1-var-amount", "149.99")
     assert has_element?(view, "#event-modules", "@sentry/node")

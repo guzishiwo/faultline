@@ -127,9 +127,27 @@ defmodule FaultlineWeb.IssueLive.ShowComponents do
   attr :event_id, :string, required: true
 
   def stacktrace(assigns) do
+    assigns = assign(assigns, :stacktrace_text, EventDetail.stacktrace_text(assigns.frames))
+
     ~H"""
     <div class="stacktrace-list overflow-hidden rounded-lg border border-base-300 bg-base-200/60">
-      <p :if={@frames == []} class="p-3 text-sm text-base-content/50">No frames</p>
+      <div class="flex items-center justify-between gap-3 border-b border-base-300 px-3 py-2">
+        <p class="text-xs text-base-content/50">
+          {if @frames == [], do: "No frames", else: "#{length(@frames)} frames"}
+        </p>
+        <button
+          :if={@frames != []}
+          id={"copy-stacktrace-#{@event_id}"}
+          type="button"
+          phx-hook="ClipboardCopy"
+          data-copy={@stacktrace_text}
+          class="inline-flex items-center gap-2 rounded-md border border-base-300 bg-base-100 px-2.5 py-1.5 text-xs font-semibold text-base-content/65 transition hover:border-base-content/30 hover:text-base-content"
+        >
+          <.icon name="hero-clipboard-document" class="size-4" />
+          <span data-copy-label>Copy</span>
+        </button>
+      </div>
+      <p :if={@frames == []} class="p-3 text-sm text-base-content/50">No stack frames.</p>
       <div
         :for={{frame, index} <- Enum.with_index(Enum.reverse(@frames), 1)}
         id={"stack-frame-#{index}"}

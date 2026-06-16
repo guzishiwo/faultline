@@ -60,4 +60,14 @@ defmodule FaultlineWeb.IssueLive.EventDetailTest do
              %{id: 3, number: 43, source: "return charge", current?: false}
            ]
   end
+
+  test "formats stacktrace text for clipboard" do
+    frames = [
+      %{"filename" => "checkout.js", "function" => "charge", "lineno" => 8},
+      %{"filename" => "app.js", "function" => "submitOrder", "lineno" => 42, "colno" => 13}
+    ]
+
+    assert EventDetail.stacktrace_text(frames) ==
+             "submitOrder (app.js:42:13)\ncharge (checkout.js:8)"
+  end
 end

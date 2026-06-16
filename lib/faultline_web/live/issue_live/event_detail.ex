@@ -98,6 +98,15 @@ defmodule FaultlineWeb.IssueLive.EventDetail do
     end
   end
 
+  def stacktrace_text(frames) when is_list(frames) do
+    frames
+    |> Enum.reverse()
+    |> Enum.map(&stacktrace_line/1)
+    |> Enum.join("\n")
+  end
+
+  def stacktrace_text(_frames), do: ""
+
   def frame_source_lines(frame) do
     pre_context = list_value(frame["pre_context"])
     context_line = frame["context_line"]
@@ -291,6 +300,10 @@ defmodule FaultlineWeb.IssueLive.EventDetail do
   defp blank_detail?(value) when is_map(value), do: map_size(value) == 0
   defp blank_detail?(value) when is_list(value), do: value == []
   defp blank_detail?(_value), do: false
+
+  defp stacktrace_line(frame) do
+    "#{frame["function"] || frame["module"] || "anonymous"} (#{frame_location(frame)})"
+  end
 
   defp frame_filename(frame), do: frame["filename"] || frame["abs_path"] || ""
 
