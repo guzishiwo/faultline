@@ -73,19 +73,45 @@ const ClipboardCopy = {
   mounted() {
     this.handleClick = async () => {
       const text = this.el.dataset.copy || ""
-      await navigator.clipboard.writeText(text)
+      let copied = false
+
+      try {
+        await navigator.clipboard.writeText(text)
+        copied = true
+      } catch (_error) {
+        copied = this.fallbackCopy(text)
+      }
 
       const label = this.el.querySelector("[data-copy-label]")
       if (!label) return
 
       const original = label.textContent
-      label.textContent = "Copied"
+      label.textContent = copied ? "Copied" : "Copy failed"
       window.setTimeout(() => {
         label.textContent = original
       }, 1200)
     }
 
     this.el.addEventListener("click", this.handleClick)
+  },
+  fallbackCopy(text) {
+    const input = document.createElement("textarea")
+    input.value = text
+    input.setAttribute("readonly", "")
+    input.style.position = "fixed"
+    input.style.top = "-1000px"
+    input.style.opacity = "0"
+
+    document.body.appendChild(input)
+    input.select()
+
+    try {
+      return document.execCommand("copy")
+    } catch (_error) {
+      return false
+    } finally {
+      document.body.removeChild(input)
+    }
   },
   destroyed() {
     this.el.removeEventListener("click", this.handleClick)

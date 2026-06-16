@@ -9,39 +9,36 @@ defmodule FaultlineWeb.ProjectSettingsLiveTest do
 
   setup :register_and_log_in_user
 
-  test "shows project settings and manages alert rules", %{conn: conn} do
+  test "defaults to rules tab and manages rules", %{conn: conn} do
     project = project_fixture()
 
     {:ok, view, _html} = live(conn, ~p"/p/#{project.slug}/settings")
 
     assert has_element?(view, "#project-settings-page")
-    assert has_element?(view, "#project-sdk-settings")
-    assert has_element?(view, "#project-dsn", project.dsn)
-    assert has_element?(view, "#project-ingest-settings")
-    assert has_element?(view, "#project-cost-controls-form")
-    assert has_element?(view, "#drop-rule-form")
+    assert has_element?(view, "#project-rules-tab")
+    assert has_element?(view, "#settings-tab-rules[aria-current='page']")
+    assert has_element?(view, "#settings-tab-ingest")
+    assert has_element?(view, "#settings-tab-sdk")
+    assert has_element?(view, "#rules-workspace-header")
+    assert has_element?(view, "#new-drop-rule-button")
+    assert has_element?(view, "#new-alert-rule-button")
+    assert has_element?(view, "#rule-builder-empty-state")
     assert has_element?(view, "#drop-rules")
     assert has_element?(view, "#project-usage-link")
+    assert has_element?(view, "#project-alert-settings + #project-drop-settings")
     assert has_element?(view, "#alert-rules")
-    assert has_element?(view, "#alert-rule-form")
     assert has_element?(view, "#alert-rules-empty-state")
+    refute has_element?(view, "#drop-rule-form")
+    refute has_element?(view, "#alert-rule-form")
+    refute has_element?(view, "#project-cost-controls-form")
+    refute has_element?(view, "#project-dsn")
 
     view
-    |> form("#project-cost-controls-form",
-      project: %{
-        rate_limit_max_events: "50",
-        rate_limit_window_seconds: "10",
-        retention_days: "14",
-        retention_event_limit: "500"
-      }
-    )
-    |> render_submit()
+    |> element("#new-drop-rule-button")
+    |> render_click()
 
-    project = Projects.get_project!(project.id)
-    assert project.rate_limit_max_events == 50
-    assert project.rate_limit_window_seconds == 10
-    assert project.retention_days == 14
-    assert project.retention_event_limit == 500
+    assert has_element?(view, "#drop-rule-form")
+    refute has_element?(view, "#alert-rule-form")
 
     view
     |> form("#drop-rule-form",
@@ -57,6 +54,7 @@ defmodule FaultlineWeb.ProjectSettingsLiveTest do
 
     [drop_rule] = Retention.list_project_drop_rules(project.id)
     assert has_element?(view, "#drop-rules-#{drop_rule.id}", "Ignore noisy timeout")
+    assert has_element?(view, "#rule-builder-empty-state")
 
     view
     |> element("#toggle-drop-rule-#{drop_rule.id}")
@@ -72,6 +70,13 @@ defmodule FaultlineWeb.ProjectSettingsLiveTest do
 
     assert Retention.list_project_drop_rules(project.id) == []
     refute has_element?(view, "#drop-rules-#{drop_rule.id}")
+
+    view
+    |> element("#new-alert-rule-button")
+    |> render_click()
+
+    assert has_element?(view, "#alert-rule-form")
+    refute has_element?(view, "#drop-rule-form")
 
     view
     |> form("#alert-rule-form",
@@ -92,10 +97,13 @@ defmodule FaultlineWeb.ProjectSettingsLiveTest do
     assert has_element?(view, "#alert-rules-#{rule.id}")
     assert has_element?(view, "#alert-rules-#{rule.id}", "New issue email")
     assert has_element?(view, "#alert-rules-#{rule.id}", "Email")
+    assert has_element?(view, "#rule-builder-empty-state")
 
     view
     |> element("#edit-alert-rule-#{rule.id}")
     |> render_click()
+
+    assert has_element?(view, "#alert-rule-form")
 
     view
     |> form("#alert-rule-form",
@@ -122,6 +130,7 @@ defmodule FaultlineWeb.ProjectSettingsLiveTest do
 
     assert has_element?(view, "#alert-rules-#{rule.id}", "Regression webhook")
     assert has_element?(view, "#alert-rules-#{rule.id}", "Webhook")
+    assert has_element?(view, "#rule-builder-empty-state")
 
     view
     |> element("#toggle-alert-rule-#{rule.id}")
@@ -139,10 +148,70 @@ defmodule FaultlineWeb.ProjectSettingsLiveTest do
     refute has_element?(view, "#alert-rules-#{rule.id}")
   end
 
+  test "falls back to rules tab for invalid tab params", %{conn: conn} do
+    project = project_fixture()
+
+    {:ok, view, _html} = live(conn, ~p"/p/#{project.slug}/settings?tab=unknown")
+
+    assert has_element?(view, "#project-rules-tab")
+    assert has_element?(view, "#settings-tab-rules[aria-current='page']")
+  end
+
+  test "updates ingest and retention settings from ingest tab", %{conn: conn} do
+    project = project_fixture()
+
+    {:ok, view, _html} = live(conn, ~p"/p/#{project.slug}/settings?tab=ingest")
+
+    assert has_element?(view, "#project-ingest-tab")
+    assert has_element?(view, "#settings-tab-ingest[aria-current='page']")
+    assert has_element?(view, "#project-ingest-settings")
+    assert has_element?(view, "#project-cost-controls-form")
+    refute has_element?(view, "#drop-rule-form")
+
+    view
+    |> form("#project-cost-controls-form",
+      project: %{
+        rate_limit_max_events: "50",
+        rate_limit_window_seconds: "10",
+        retention_days: "14",
+        retention_event_limit: "500"
+      }
+    )
+    |> render_submit()
+
+    project = Projects.get_project!(project.id)
+    assert project.rate_limit_max_events == 50
+    assert project.rate_limit_window_seconds == 10
+    assert project.retention_days == 14
+    assert project.retention_event_limit == 500
+  end
+
+  test "shows sdk setup tab with dsn copy action", %{conn: conn} do
+    project = project_fixture()
+
+    {:ok, view, _html} = live(conn, ~p"/p/#{project.slug}/settings?tab=sdk")
+
+    assert has_element?(view, "#project-sdk-tab")
+    assert has_element?(view, "#settings-tab-sdk[aria-current='page']")
+    assert has_element?(view, "#project-sdk-settings")
+    assert has_element?(view, "#project-dsn", project.dsn)
+
+    assert has_element?(
+             view,
+             "#copy-project-dsn-button[phx-hook='ClipboardCopy'][data-copy='#{project.dsn}']"
+           )
+
+    refute has_element?(view, "#drop-rule-form")
+  end
+
   test "shows validation errors for invalid alert targets", %{conn: conn} do
     project = project_fixture()
 
     {:ok, view, _html} = live(conn, ~p"/p/#{project.slug}/settings")
+
+    view
+    |> element("#new-alert-rule-button")
+    |> render_click()
 
     view
     |> form("#alert-rule-form",
