@@ -13,7 +13,7 @@ defmodule Faultline.Projects do
   alias Faultline.Projects.Project
   alias Faultline.Repo
 
-  @default_dsn_base_url "http://localhost:4000"
+  @default_dsn_base_url "http://localhost:4010"
 
   @doc """
   Lists projects ordered by newest first.
@@ -41,7 +41,12 @@ defmodule Faultline.Projects do
     dsn_base_url = Keyword.get(opts, :dsn_base_url, configured_dsn_base_url())
 
     Multi.new()
-    |> Multi.insert(:project, Project.create_changeset(%Project{}, attrs))
+    |> Multi.run(:project_number, fn repo, _changes ->
+      {:ok, next_project_number(repo)}
+    end)
+    |> Multi.insert(:project, fn %{project_number: project_number} ->
+      Project.create_changeset(%Project{}, Map.put(attrs, "project_number", project_number))
+    end)
     |> Multi.update(:project_with_dsn, fn %{project: project} ->
       Project.update_dsn_changeset(project, DSN.build(project, dsn_base_url))
     end)
@@ -104,6 +109,16 @@ defmodule Faultline.Projects do
     schema
     |> where([record], record.project_id == ^project_id)
     |> Repo.aggregate(aggregate, field)
+  end
+
+  defp next_project_number(repo) do
+    Project
+    |> select([project], max(project.project_number))
+    |> repo.one()
+    |> case do
+      nil -> 1
+      project_number -> project_number + 1
+    end
   end
 
   defp configured_dsn_base_url do

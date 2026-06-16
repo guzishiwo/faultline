@@ -1,0 +1,7 @@
+_build
+deps
+.git
+.elixir_ls
+tmp
+priv/repo/*.db*
+node_modules

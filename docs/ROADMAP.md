@@ -6,11 +6,11 @@ This roadmap is written as GitHub-ready execution slices. Each milestone should 
 
 Goal: make the repository easy to run, test, and deploy locally.
 
-- [x] Generate Phoenix 1.8 application with LiveView and PostgreSQL.
+- [x] Generate Phoenix 1.8 application with LiveView.
 - [x] Upgrade project dependencies to Phoenix 1.8.8 and LiveView 1.2.x.
 - [x] Document product scope, architecture boundaries, and local development.
-- [ ] Add Docker Compose for PostgreSQL.
-- [ ] Add release-oriented runtime configuration notes.
+- [x] Switch the V1.0 default storage path to SQLite.
+- [x] Add release-oriented runtime configuration notes.
 - [x] Add basic CI with `mix precommit`.
 
 ## Milestone 1: Project and DSN Model
@@ -62,7 +62,7 @@ Goal: convert raw SDK payloads into a stable internal event model.
 - [x] Extract exception type, value, mechanism, and stacktrace frames.
 - [x] Extract tags, user, request, release, environment, and server name.
 - [x] Extract breadcrumbs.
-- [x] Store normalized event data in queryable columns plus JSONB details.
+- [x] Store normalized event data in queryable columns plus JSON details.
 - [x] Add validation for malformed but acceptable SDK payloads.
 - [x] Add fixtures for Elixir, JavaScript, Python, and Ruby SDK events.
 
@@ -115,8 +115,8 @@ Goal: keep single-node deployments predictable and cheap.
 
 Goal: make self-hosting boring.
 
-- [ ] Add production Dockerfile.
-- [ ] Add Docker Compose for app and PostgreSQL.
+- [x] Add production Dockerfile.
+- [x] Add SQLite-first single-container deployment path.
 - [ ] Add health check endpoint.
 - [ ] Add deployment guide for a small VPS.
 - [ ] Add backup and restore notes.
@@ -131,3 +131,4 @@ Goal: make self-hosting boring.
 - [ ] ClickHouse event storage option.
 - [ ] Performance transaction ingestion.
 - [ ] Public API for basic issue operations.
+- [ ] Optional PostgreSQL/SaaS storage profile.

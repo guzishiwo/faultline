@@ -45,6 +45,7 @@ defmodule Faultline.Accounts.User do
     changeset =
       changeset
       |> validate_required([:email])
+      |> update_change(:email, &String.downcase/1)
       |> validate_format(:email, ~r/^[^@,;\s]+@[^@,;\s]+$/,
         message: "must have the @ sign and no spaces"
       )

@@ -11,6 +11,7 @@ defmodule Faultline.Issues do
   alias Faultline.Issues.Grouping
   alias Faultline.Issues.Issue
   alias Faultline.Repo
+  alias Faultline.Search
 
   @reopen_statuses ~w(resolved)
   @default_page_size 20
@@ -49,6 +50,7 @@ defmodule Faultline.Issues do
     |> Repo.transaction()
     |> case do
       {:ok, %{updated_issue: issue, event: event, alert_trigger: alert_trigger}} ->
+        Search.sync_event(event, issue)
         broadcast_issue_change(issue)
         dispatch_alerts(event, issue, alert_trigger)
         {:ok, issue, event}
@@ -158,12 +160,23 @@ defmodule Faultline.Issues do
   end
 
   def issue_matches_search?(%Issue{} = issue, search) when is_binary(search) do
-    search = search |> String.trim() |> String.downcase()
+    parsed = Search.Query.parse(search)
+    search = String.downcase(parsed.text)
 
-    search == "" or
-      [issue.title, issue.fingerprint]
-      |> Enum.reject(&is_nil/1)
-      |> Enum.any?(&(String.downcase(&1) |> String.contains?(search)))
+    text_matches? =
+      search == "" or
+        [issue.title, issue.fingerprint]
+        |> Enum.reject(&is_nil/1)
+        |> Enum.any?(&(String.downcase(&1) |> String.contains?(search)))
+
+    reserved_filters_match? =
+      Enum.all?(parsed.filters, fn
+        {"status", status} -> issue.status == status
+        {"project", project} -> project in [issue.project_id]
+        {_key, _value} -> true
+      end)
+
+    text_matches? and reserved_filters_match?
   end
 
   def issue_matches_search?(%Issue{}, _search), do: true
@@ -261,31 +274,15 @@ defmodule Faultline.Issues do
   defp search_issues(query, nil), do: query
 
   defp search_issues(query, search) when is_binary(search) do
-    case String.trim(search) do
-      "" ->
-        query
-
-      search ->
-        pattern = "%#{escape_like(search)}%"
-
-        where(
-          query,
-          [issue],
-          fragment("? ILIKE ? ESCAPE '\\'", issue.title, ^pattern) or
-            fragment("? ILIKE ? ESCAPE '\\'", issue.fingerprint, ^pattern)
-        )
+    case Search.search_issues(search) do
+      :all -> query
+      [] -> where(query, false)
+      issue_ids -> where(query, [issue], issue.id in ^issue_ids)
     end
   end
 
   defp order_issues(query) do
     order_by(query, [issue], desc: issue.last_seen_at, desc: issue.id)
-  end
-
-  defp escape_like(search) do
-    search
-    |> String.replace("\\", "\\\\")
-    |> String.replace("%", "\\%")
-    |> String.replace("_", "\\_")
   end
 
   defp status_matches?(%Issue{}, nil), do: true

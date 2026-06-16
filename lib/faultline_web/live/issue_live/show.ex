@@ -18,6 +18,8 @@ defmodule FaultlineWeb.IssueLive.Show do
      |> assign(:project, project)
      |> assign(:issue, issue)
      |> assign(:events, events)
+     |> assign(:event_search_query, "")
+     |> assign(:event_filter_form, event_filter_form(""))
      |> assign(:selected_event, selected_event_for_detail(issue.id, List.first(events)))
      |> assign(:raw_event_payload, nil)
      |> assign(:raw_event_event_id, nil)}
@@ -56,6 +58,23 @@ defmodule FaultlineWeb.IssueLive.Show do
          |> assign(:raw_event_payload, nil)
          |> assign(:raw_event_event_id, nil)}
     end
+  end
+
+  def handle_event("filter_events", %{"event_filters" => %{"q" => query}}, socket) do
+    query = normalize_event_search(query)
+    events = Events.list_issue_events(socket.assigns.issue.id, limit: 20, search: query)
+
+    {:noreply,
+     socket
+     |> assign(:events, events)
+     |> assign(:event_search_query, query)
+     |> assign(:event_filter_form, event_filter_form(query))
+     |> assign(
+       :selected_event,
+       selected_event_for_detail(socket.assigns.issue.id, List.first(events))
+     )
+     |> assign(:raw_event_payload, nil)
+     |> assign(:raw_event_event_id, nil)}
   end
 
   @impl true
@@ -155,6 +174,30 @@ defmodule FaultlineWeb.IssueLive.Show do
                 Latest {@events |> length()} shown
               </p>
             </div>
+
+            <.form
+              for={@event_filter_form}
+              id="issue-event-search-form"
+              phx-change="filter_events"
+              phx-submit="filter_events"
+              class="border-b border-base-300 p-3"
+            >
+              <div class="relative [&_.fieldset]:mb-0">
+                <.icon
+                  name="hero-magnifying-glass"
+                  class="pointer-events-none absolute left-3 top-3 size-4 text-base-content/35"
+                />
+                <.input
+                  field={@event_filter_form[:q]}
+                  type="search"
+                  placeholder="release: web@2.0.0"
+                  autocomplete="off"
+                  phx-debounce="300"
+                  aria-label="Filter issue events"
+                  class="h-10 w-full rounded-lg border border-base-300 bg-base-100 pl-9 pr-3 text-sm text-base-content shadow-sm outline-none transition placeholder:text-base-content/35 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                />
+              </div>
+            </.form>
 
             <div class="max-h-[42rem] overflow-auto">
               <p :if={@events == []} class="p-4 text-sm text-base-content/60">
@@ -522,6 +565,15 @@ defmodule FaultlineWeb.IssueLive.Show do
       _ -> nil
     end
   end
+
+  defp event_filter_form(search_query) do
+    to_form(%{"q" => search_query}, as: :event_filters)
+  end
+
+  defp normalize_event_search(search_query) when is_binary(search_query),
+    do: String.trim(search_query)
+
+  defp normalize_event_search(_search_query), do: ""
 
   defp selected_event?(%{id: selected_id}, %{id: event_id}), do: selected_id == event_id
   defp selected_event?(_selected_event, _event), do: false

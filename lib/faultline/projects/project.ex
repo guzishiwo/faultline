@@ -285,7 +285,7 @@ defmodule Faultline.Projects.Project do
   @platform_values Enum.map(@platforms, & &1.id)
 
   schema "projects" do
-    field :project_number, :integer, read_after_writes: true
+    field :project_number, :integer
     field :name, :string
     field :slug, :string
     field :platform, :string, default: @default_platform
@@ -307,6 +307,7 @@ defmodule Faultline.Projects.Project do
   def create_changeset(project, attrs) do
     project
     |> cast(attrs, [
+      :project_number,
       :name,
       :platform,
       :rate_limit_max_events,
@@ -315,6 +316,7 @@ defmodule Faultline.Projects.Project do
       :retention_event_limit
     ])
     |> validate_required([
+      :project_number,
       :name,
       :platform,
       :rate_limit_max_events,
@@ -322,6 +324,7 @@ defmodule Faultline.Projects.Project do
       :retention_days,
       :retention_event_limit
     ])
+    |> validate_number(:project_number, greater_than: 0)
     |> validate_length(:name, min: 2, max: 80)
     |> validate_inclusion(:platform, @platform_values)
     |> validate_cost_controls()

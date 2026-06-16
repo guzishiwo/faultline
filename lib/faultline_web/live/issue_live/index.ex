@@ -196,10 +196,10 @@ defmodule FaultlineWeb.IssueLive.Index do
               <.input
                 field={@filter_form[:q]}
                 type="search"
-                placeholder="Search issues by title or fingerprint"
+                placeholder="Search issues, e.g. release:web@1.2.3 environment:prod TypeError"
                 autocomplete="off"
                 phx-debounce="300"
-                aria-label="Search issues"
+                aria-label="Search issues by text or key value filters"
                 class="h-12 w-full rounded-lg border border-base-300 bg-base-100 pl-10 pr-10 text-sm text-base-content shadow-sm outline-none transition placeholder:text-base-content/35 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
               />
             </div>

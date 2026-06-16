@@ -24,5 +24,30 @@ defmodule Faultline.Repo.Migrations.CreateIssuesAndLinkEvents do
     end
 
     create index(:events, [:issue_id])
+
+    create table(:issue_search_documents) do
+      add :issue_id, references(:issues, on_delete: :delete_all), null: false
+      add :project_id, references(:projects, on_delete: :delete_all), null: false
+      add :document, :text, null: false, default: ""
+      add :tags, :text, null: false, default: ""
+      add :release, :string
+      add :environment, :string
+      add :level, :string
+      add :logger, :string
+      add :platform, :string
+      add :server_name, :string
+      add :user_identifier, :string
+      add :request_url, :string
+      add :last_seen_at, :utc_datetime_usec, null: false
+
+      timestamps(type: :utc_datetime_usec)
+    end
+
+    create unique_index(:issue_search_documents, [:issue_id])
+    create index(:issue_search_documents, [:project_id])
+    create index(:issue_search_documents, [:release])
+    create index(:issue_search_documents, [:environment])
+    create index(:issue_search_documents, [:level])
+    create index(:issue_search_documents, [:last_seen_at])
   end
 end

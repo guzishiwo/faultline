@@ -1,23 +1,44 @@
-# Single-node deployment
+# Single-node Deployment
 
-Faultline should stay predictable and cheap for a single Phoenix node plus PostgreSQL.
-Avoid adding Redis, Kafka, ClickHouse, or a separate job system until the product has a
-measured need that PostgreSQL and the BEAM cannot cover.
+Faultline V1.0 should stay predictable and cheap for a single Phoenix node plus
+SQLite. Avoid adding PostgreSQL, Redis, Kafka, ClickHouse, object storage, or a
+separate job system until the product has a measured need that SQLite and the
+BEAM cannot cover.
 
 ## Required services
 
 - One Faultline Phoenix release.
-- One PostgreSQL database.
+- One SQLite database file.
 - Optional SMTP or webhook egress for alerts.
+
+## Docker path
+
+The default open-source deployment should be one command:
+
+```sh
+docker run -p 4010:4010 -v faultline-data:/data faultline
+```
+
+The container stores its database at:
+
+```text
+/data/faultline.db
+```
+
+If `SECRET_KEY_BASE` is not provided, the entrypoint generates one and stores it
+in `/data/secret_key_base` so sessions survive restarts with the same volume.
 
 ## Required environment
 
 ```sh
 PHX_SERVER=true
 PHX_HOST=errors.example.com
-SECRET_KEY_BASE=...
-DATABASE_URL=ecto://USER:PASS@HOST/DATABASE
+DATABASE_PATH=/data/faultline.db
 ```
+
+`SECRET_KEY_BASE` is optional for the Docker image because the entrypoint can
+persist one under `/data`. For hand-built releases outside Docker, provide a
+stable `SECRET_KEY_BASE`.
 
 ## Cost controls
 
@@ -25,7 +46,8 @@ These defaults are intentionally small. Raise them only after observing saturati
 
 | Variable | Default | Purpose |
 | --- | ---: | --- |
-| `POOL_SIZE` | `5` | PostgreSQL connections opened by the web node. |
+| `DATABASE_PATH` | `/data/faultline.db` | SQLite database file path. |
+| `POOL_SIZE` | `5` | SQLite connections opened by the web node. |
 | `DB_QUEUE_TARGET_MS` | `50` | Ecto checkout queue target before back-pressure increases. |
 | `DB_QUEUE_INTERVAL_MS` | `1000` | Ecto queue interval for adapting checkout pressure. |
 | `MAX_ENVELOPE_BYTES` | `1000000` | Maximum Sentry envelope request body accepted by ingest. |
@@ -35,7 +57,8 @@ These defaults are intentionally small. Raise them only after observing saturati
 ## Operational shape
 
 - Keep ingest synchronous and bounded at the HTTP edge.
-- Store raw events and normalized events in PostgreSQL first.
+- Store raw events and normalized events in SQLite first.
+- Use one SQLite-backed issue search document table for V1.0 search.
 - Keep alert delivery best-effort and deduplicated; do not add a queue service by default.
 - Run retention cleanup on the local BEAM node; missed runs after restarts are acceptable.
 - Load large event payloads on demand in the UI instead of rendering them in lists.
@@ -53,11 +76,11 @@ MIX_ENV=prod mix release
 Run migrations before starting or during deployment:
 
 ```sh
-MIX_ENV=prod mix ecto.migrate
+bin/faultline eval 'Faultline.Release.migrate()'
 ```
 
 Then start the release:
 
 ```sh
-PHX_SERVER=true bin/faultline start
+PHX_SERVER=true DATABASE_PATH=/data/faultline.db bin/faultline start
 ```

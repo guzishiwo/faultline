@@ -3,7 +3,7 @@ defmodule Faultline.Repo.Migrations.CreateProjects do
 
   def change do
     create table(:projects) do
-      add :project_number, :bigserial, null: false
+      add :project_number, :integer, null: false
       add :name, :string, null: false
       add :slug, :string, null: false
       add :public_key, :string, null: false

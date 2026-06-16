@@ -21,25 +21,16 @@ if System.get_env("PHX_SERVER") do
 end
 
 config :faultline, FaultlineWeb.Endpoint,
-  http: [port: String.to_integer(System.get_env("PORT", "4000"))]
+  http: [port: String.to_integer(System.get_env("PORT", "4010"))]
 
 if config_env() == :prod do
-  database_url =
-    System.get_env("DATABASE_URL") ||
-      raise """
-      environment variable DATABASE_URL is missing.
-      For example: ecto://USER:PASS@HOST/DATABASE
-      """
-
-  maybe_ipv6 = if System.get_env("ECTO_IPV6") in ~w(true 1), do: [:inet6], else: []
+  database_path = System.get_env("DATABASE_PATH") || "/data/faultline.db"
 
   config :faultline, Faultline.Repo,
-    # ssl: true,
-    url: database_url,
+    database: database_path,
     pool_size: String.to_integer(System.get_env("POOL_SIZE") || "5"),
     queue_target: String.to_integer(System.get_env("DB_QUEUE_TARGET_MS") || "50"),
-    queue_interval: String.to_integer(System.get_env("DB_QUEUE_INTERVAL_MS") || "1000"),
-    socket_options: maybe_ipv6
+    queue_interval: String.to_integer(System.get_env("DB_QUEUE_INTERVAL_MS") || "1000")
 
   config :faultline, :ingest,
     max_envelope_bytes: String.to_integer(System.get_env("MAX_ENVELOPE_BYTES") || "1000000")

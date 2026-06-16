@@ -22,6 +22,9 @@ erl_crash.dump
 # Temporary files, for example, from tests.
 /tmp/
 
+# Local SQLite databases.
+/priv/repo/*.db*
+
 # Ignore package tarball (built via "mix hex.build").
 faultline-*.tar
 

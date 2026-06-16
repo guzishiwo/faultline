@@ -255,6 +255,57 @@ defmodule Faultline.IssuesTest do
       refute other_issue in page.issues
     end
 
+    test "searches issues with structured key value filters" do
+      first_project = project_fixture()
+      second_project = project_fixture()
+
+      target =
+        "javascript.json"
+        |> fixture_payload()
+        |> Map.put("release", "web@1.2.3")
+        |> Map.put("environment", "production")
+        |> Map.put("tags", %{"feature" => "checkout flow"})
+        |> put_in(["exception", "values", Access.at(0), "value"], "Checkout payment failed")
+        |> normalize_payload(first_project)
+
+      other =
+        "ruby.json"
+        |> fixture_payload()
+        |> Map.put("release", "worker@9.9.9")
+        |> Map.put("environment", "staging")
+        |> Map.put("tags", %{"feature" => "background job"})
+        |> normalize_payload(second_project)
+
+      target_issue = Repo.get!(Issue, target.issue_id)
+      other_issue = Repo.get!(Issue, other.issue_id)
+
+      assert [^target_issue] = Issues.list_project_issues(first_project.id, search: "Checkout")
+      assert [target_issue.id] == issue_ids(Issues.list_issues(search: "release:web@1.2.3"))
+      assert [target_issue.id] == issue_ids(Issues.list_issues(search: "environment:production"))
+
+      assert [target_issue.id] ==
+               issue_ids(Issues.list_issues(search: ~s(feature:"checkout flow")))
+
+      assert [target_issue.id] ==
+               issue_ids(
+                 Issues.list_issues(search: "release:web@1.2.3 environment:production Checkout")
+               )
+
+      assert [] ==
+               Issues.list_issues(search: "release:web@1.2.3 environment:staging Checkout")
+
+      assert [target_issue.id] ==
+               issue_ids(Issues.list_issues(search: "project:#{first_project.slug}"))
+
+      assert [target_issue.id] ==
+               issue_ids(Issues.list_issues(search: ~s(project:"#{first_project.name}")))
+
+      assert {:ok, resolved_issue} = Issues.update_issue_status(target_issue, "resolved")
+      assert [resolved_issue.id] == issue_ids(Issues.list_issues(search: "status:resolved"))
+
+      refute other_issue in Issues.list_issues(search: "release:web@1.2.3")
+    end
+
     test "filters issues by status and last seen time" do
       project = project_fixture()
 
@@ -314,6 +365,8 @@ defmodule Faultline.IssuesTest do
     assert {:ok, event} = Events.normalize_raw_event(raw_event)
     event
   end
+
+  defp issue_ids(issues), do: Enum.map(issues, & &1.id)
 
   defp fixture_payload(filename) do
     @fixtures

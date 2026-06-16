@@ -71,6 +71,12 @@ defmodule FaultlineWeb.IssueLiveTest do
     {:ok, view, _html} = live(conn, ~p"/p/#{project.slug}/issues")
 
     assert has_element?(view, "#issue-search-form")
+
+    assert has_element?(
+             view,
+             ~s|#issue-search-form input[placeholder="Search issues, e.g. release:web@1.2.3 environment:prod TypeError"]|
+           )
+
     assert has_element?(view, "#issues-#{target_event.issue_id}")
     assert has_element?(view, "#issues-#{other_event.issue_id}")
 
@@ -245,6 +251,37 @@ defmodule FaultlineWeb.IssueLiveTest do
 
     assert has_element?(view, "#issue-event-#{newer_event.id}")
     refute has_element?(view, "#raw-event-json")
+  end
+
+  test "filters issue detail events by tag query", %{conn: conn} do
+    project = project_fixture()
+
+    older_event =
+      event_fixture(project, "javascript.json", %{
+        "timestamp" => "2026-06-14T15:00:00Z",
+        "release" => "web@1.2.3"
+      })
+
+    newer_event =
+      event_fixture(project, "javascript.json", %{
+        "event_id" => "99999999999999999999999999999999",
+        "timestamp" => "2026-06-14T15:05:00Z",
+        "release" => "web@2.0.0"
+      })
+
+    {:ok, view, _html} = live(conn, ~p"/p/#{project.slug}/issues/#{older_event.issue_id}")
+
+    assert has_element?(view, "#issue-event-search-form")
+    assert has_element?(view, "#select-event-#{older_event.id}")
+    assert has_element?(view, "#select-event-#{newer_event.id}")
+
+    view
+    |> element("#issue-event-search-form")
+    |> render_change(%{"event_filters" => %{"q" => "release:web@2.0.0"}})
+
+    refute has_element?(view, "#select-event-#{older_event.id}")
+    assert has_element?(view, "#select-event-#{newer_event.id}")
+    assert has_element?(view, "#issue-event-#{newer_event.id}")
   end
 
   test "marks source frames with common Sentry SDK languages", %{conn: conn} do

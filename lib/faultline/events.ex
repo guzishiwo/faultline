@@ -10,6 +10,7 @@ defmodule Faultline.Events do
   alias Faultline.Ingest.RawEvent
   alias Faultline.Issues
   alias Faultline.Repo
+  alias Faultline.Search
 
   @doc """
   Normalizes a raw Sentry event into the queryable event table.
@@ -45,9 +46,11 @@ defmodule Faultline.Events do
   """
   def list_issue_events(issue_id, opts \\ []) do
     limit = Keyword.get(opts, :limit, 20)
+    search = Keyword.get(opts, :search, "")
 
     Event
     |> where([event], event.issue_id == ^issue_id)
+    |> filter_event_search(issue_id, search)
     |> order_by([event], desc: event.occurred_at, desc: event.id)
     |> limit(^limit)
     |> Repo.all()
@@ -62,5 +65,16 @@ defmodule Faultline.Events do
     |> where([event], event.id == ^event_id)
     |> preload(:raw_event)
     |> Repo.one!()
+  end
+
+  defp filter_event_search(query, _issue_id, nil), do: query
+  defp filter_event_search(query, _issue_id, ""), do: query
+
+  defp filter_event_search(query, issue_id, search) when is_binary(search) do
+    case Search.search_events(search, issue_id) do
+      :all -> query
+      [] -> where(query, false)
+      event_ids -> where(query, [event], event.id in ^event_ids)
+    end
   end
 end
