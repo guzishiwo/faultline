@@ -3,6 +3,7 @@ defmodule FaultlineWeb.IssueLive.Index do
 
   alias Faultline.Issues
   alias Faultline.Projects
+  alias FaultlineWeb.TimeComponents
 
   @page_size 20
   @all_projects "-1"
@@ -449,7 +450,11 @@ defmodule FaultlineWeb.IssueLive.Index do
               </span>
               <span class="text-sm font-semibold text-base-content">{issue.event_count}</span>
               <span class="text-sm font-semibold text-base-content">{issue.affected_user_count}</span>
-              <time class="text-sm text-base-content/65">{format_time(issue.last_seen_at)}</time>
+              <TimeComponents.local_time
+                id={"issue-last-seen-#{issue.id}"}
+                datetime={issue.last_seen_at}
+                class="text-sm text-base-content/65"
+              />
             </.link>
           </div>
         </section>
@@ -480,8 +485,6 @@ defmodule FaultlineWeb.IssueLive.Index do
   defp status_class("ignored"),
     do:
       "inline-flex h-7 w-fit items-center rounded-md bg-zinc-100 px-2.5 text-xs font-semibold uppercase tracking-[0.08em] text-zinc-700"
-
-  defp format_time(%DateTime{} = datetime), do: Calendar.strftime(datetime, "%Y-%m-%d %H:%M")
 
   defp apply_filters(socket, params) do
     filters = filters_from_params(params, socket.assigns.projects)

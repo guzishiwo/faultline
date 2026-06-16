@@ -21,6 +21,11 @@ defmodule FaultlineWeb.IssueLiveTest do
 
     assert has_element?(view, "#issues")
     assert has_element?(view, "#issues-#{event.issue_id}")
+
+    assert has_element?(
+             view,
+             "#issue-last-seen-#{event.issue_id}[phx-hook='LocalTime'][datetime='2026-06-14T15:00:00.000000Z']"
+           )
   end
 
   test "loads more issues with keyset pagination", %{conn: conn} do
@@ -212,6 +217,11 @@ defmodule FaultlineWeb.IssueLiveTest do
 
     assert has_element?(
              view,
+             "#issue-last-seen[phx-hook='LocalTime'][datetime='2026-06-14T15:05:00.000000Z']"
+           )
+
+    assert has_element?(
+             view,
              ~s|#set-status-unresolved[class*="border-error/40"][class*="bg-error/10"][class*="text-error"]|
            )
 
@@ -234,6 +244,17 @@ defmodule FaultlineWeb.IssueLiveTest do
     |> render_click()
 
     assert has_element?(view, "#issue-event-#{newer_event.id}")
+
+    assert has_element?(
+             view,
+             "#selected-event-occurred-at[phx-hook='LocalTime'][datetime='2026-06-14T15:05:00.000000Z']"
+           )
+
+    assert has_element?(
+             view,
+             "#occurrence-#{newer_event.id}-occurred-at[phx-hook='LocalTime'][datetime='2026-06-14T15:05:00.000000Z']"
+           )
+
     assert has_element?(view, "#stack-frame-1")
     assert has_element?(view, "details#event-overview[open] summary", "Overview")
     assert has_element?(view, "details#event-stacktrace[open] summary", "Stacktrace")

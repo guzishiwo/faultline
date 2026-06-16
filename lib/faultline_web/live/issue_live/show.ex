@@ -4,6 +4,7 @@ defmodule FaultlineWeb.IssueLive.Show do
   alias Faultline.Events
   alias Faultline.Issues
   alias FaultlineWeb.IssueLive.{EventDetail, ShowComponents}
+  alias FaultlineWeb.TimeComponents
   alias Faultline.Projects
 
   @impl true
@@ -150,9 +151,11 @@ defmodule FaultlineWeb.IssueLive.Show do
             <p class="text-xs font-semibold uppercase tracking-[0.14em] text-base-content/50">
               Last seen
             </p>
-            <p class="mt-2 text-sm font-semibold text-base-content">
-              {EventDetail.format_time(@issue.last_seen_at)}
-            </p>
+            <TimeComponents.local_time
+              id="issue-last-seen"
+              datetime={@issue.last_seen_at}
+              class="mt-2 block text-sm font-semibold text-base-content"
+            />
           </div>
         </section>
 
@@ -221,7 +224,10 @@ defmodule FaultlineWeb.IssueLive.Show do
                 </span>
                 <span class="mt-1 flex items-center justify-between gap-2 text-xs text-base-content/55">
                   <span>{event.environment || "unknown env"}</span>
-                  <span>{EventDetail.format_time(event.occurred_at)}</span>
+                  <TimeComponents.local_time
+                    id={"occurrence-#{event.id}-occurred-at"}
+                    datetime={event.occurred_at}
+                  />
                 </span>
               </button>
             </div>
@@ -241,7 +247,12 @@ defmodule FaultlineWeb.IssueLive.Show do
                   </h2>
                   <p class="mt-1 text-sm text-base-content/60">
                     {@selected_event.platform || "unknown"} &middot; {@selected_event.level ||
-                      "unknown"} &middot; {EventDetail.format_time(@selected_event.occurred_at)}
+                      "unknown"} &middot;
+                    <TimeComponents.local_time
+                      id="selected-event-occurred-at"
+                      datetime={@selected_event.occurred_at}
+                      class="inline"
+                    />
                   </p>
                 </div>
                 <button

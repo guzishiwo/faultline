@@ -92,11 +92,56 @@ const ClipboardCopy = {
   },
 }
 
+const LocalTime = {
+  mounted() {
+    this.format()
+  },
+  updated() {
+    this.format()
+  },
+  format() {
+    const datetime = this.el.getAttribute("datetime")
+    const date = new Date(datetime)
+
+    if (Number.isNaN(date.getTime())) return
+
+    const options = {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }
+
+    if (this.el.dataset.localTimeFormat === "second") {
+      options.second = "2-digit"
+    }
+
+    this.el.textContent = formatLocalDate(date, options)
+  },
+}
+
+function formatLocalDate(date, options) {
+  const parts = new Intl.DateTimeFormat(undefined, options)
+    .formatToParts(date)
+    .reduce((values, part) => {
+      values[part.type] = part.value
+      return values
+    }, {})
+
+  const time = options.second
+    ? `${parts.hour}:${parts.minute}:${parts.second}`
+    : `${parts.hour}:${parts.minute}`
+
+  return `${parts.year}-${parts.month}-${parts.day} ${time}`
+}
+
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 const liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
   params: {_csrf_token: csrfToken},
-  hooks: {...colocatedHooks, CodeHighlight, ClipboardCopy},
+  hooks: {...colocatedHooks, CodeHighlight, ClipboardCopy, LocalTime},
 })
 
 // Show progress bar on live navigation and form submits
