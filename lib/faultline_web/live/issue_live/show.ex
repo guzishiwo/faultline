@@ -185,7 +185,7 @@ defmodule FaultlineWeb.IssueLive.Show do
               <div class="relative [&_.fieldset]:mb-0">
                 <.icon
                   name="hero-magnifying-glass"
-                  class="pointer-events-none absolute left-3 top-3 size-4 text-base-content/35"
+                  class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-base-content/35"
                 />
                 <.input
                   field={@event_filter_form[:q]}

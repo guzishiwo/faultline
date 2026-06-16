@@ -77,6 +77,11 @@ defmodule FaultlineWeb.IssueLiveTest do
              ~s|#issue-search-form input[placeholder="Search issues, e.g. release:web@1.2.3 environment:prod TypeError"]|
            )
 
+    assert has_element?(
+             view,
+             ~s|#issue-search-form .hero-magnifying-glass[class*="top-1/2"][class*="-translate-y-1/2"]|
+           )
+
     assert has_element?(view, "#issues-#{target_event.issue_id}")
     assert has_element?(view, "#issues-#{other_event.issue_id}")
 
@@ -105,13 +110,21 @@ defmodule FaultlineWeb.IssueLiveTest do
     {:ok, view, _html} = live(conn, ~p"/issues?project=-1")
 
     assert has_element?(view, "#issue-search-form")
+    assert has_element?(view, click_away_wrapper_selector("#theme-menu-trigger"))
+    assert has_element?(view, click_away_wrapper_selector("#account-menu-trigger"))
     assert has_element?(view, "#issues-#{first_event.issue_id}")
     assert has_element?(view, "#issues-#{second_event.issue_id}")
     assert has_element?(view, "#issues-#{first_event.issue_id}", first_project.name)
     assert has_element?(view, "#issues-#{second_event.issue_id}", second_project.name)
+    assert has_element?(view, "#issue-project-meta-#{first_event.issue_id}", first_project.name)
+    assert has_element?(view, "#issue-project-meta-#{second_event.issue_id}", second_project.name)
+    refute has_element?(view, "#issues-#{first_event.issue_id} .font-mono")
     assert has_element?(view, "#project-filter-menu")
+    assert has_element?(view, click_away_details_selector("#project-filter-menu"))
     assert has_element?(view, "#project-filter-logo-#{first_project.id}", "R")
     assert has_element?(view, "#project-filter-logo-#{second_project.id}", "F")
+    assert has_element?(view, click_away_details_selector("#status-filter-menu"))
+    assert has_element?(view, click_away_details_selector("#time-filter-menu"))
     assert has_element?(view, "#issue-project-logo-#{first_event.issue_id}", "R")
 
     view
@@ -272,6 +285,12 @@ defmodule FaultlineWeb.IssueLiveTest do
     {:ok, view, _html} = live(conn, ~p"/p/#{project.slug}/issues/#{older_event.issue_id}")
 
     assert has_element?(view, "#issue-event-search-form")
+
+    assert has_element?(
+             view,
+             ~s|#issue-event-search-form .hero-magnifying-glass[class*="top-1/2"][class*="-translate-y-1/2"]|
+           )
+
     assert has_element?(view, "#select-event-#{older_event.id}")
     assert has_element?(view, "#select-event-#{newer_event.id}")
 
@@ -464,5 +483,13 @@ defmodule FaultlineWeb.IssueLiveTest do
 
   defp unique_project_name do
     "Project #{System.unique_integer([:positive])}"
+  end
+
+  defp click_away_details_selector(selector) do
+    "#{selector}[data-close-on-click-away][phx-click-away][phx-window-keydown][phx-key='escape']"
+  end
+
+  defp click_away_wrapper_selector(child_selector) do
+    "details[data-close-on-click-away][phx-click-away][phx-window-keydown][phx-key='escape'] #{child_selector}"
   end
 end

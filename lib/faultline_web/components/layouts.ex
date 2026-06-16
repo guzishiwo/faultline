@@ -158,7 +158,13 @@ defmodule FaultlineWeb.Layouts do
   """
   def theme_toggle(assigns) do
     ~H"""
-    <details class="group relative">
+    <details
+      class="group relative"
+      data-close-on-click-away
+      phx-click-away={JS.remove_attribute("open")}
+      phx-window-keydown={JS.remove_attribute("open")}
+      phx-key="escape"
+    >
       <summary
         id="theme-menu-trigger"
         class="flex size-9 cursor-pointer list-none items-center justify-center rounded-lg border border-base-300 bg-base-100 text-base-content/70 shadow-sm transition hover:-translate-y-0.5 hover:text-base-content hover:shadow-md [&::-webkit-details-marker]:hidden"
@@ -202,7 +208,14 @@ defmodule FaultlineWeb.Layouts do
 
   def account_menu(assigns) do
     ~H"""
-    <details :if={@current_scope && @current_scope.user} class="group relative">
+    <details
+      :if={@current_scope && @current_scope.user}
+      class="group relative"
+      data-close-on-click-away
+      phx-click-away={JS.remove_attribute("open")}
+      phx-window-keydown={JS.remove_attribute("open")}
+      phx-key="escape"
+    >
       <summary
         id="account-menu-trigger"
         class="flex size-9 cursor-pointer list-none items-center justify-center rounded-lg border border-base-300 bg-base-content text-xs font-bold uppercase text-base-100 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md [&::-webkit-details-marker]:hidden"

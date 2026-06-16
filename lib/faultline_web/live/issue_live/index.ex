@@ -191,7 +191,7 @@ defmodule FaultlineWeb.IssueLive.Index do
             <div class="relative [&_.fieldset]:mb-0">
               <.icon
                 name="hero-magnifying-glass"
-                class="pointer-events-none absolute left-3 top-3.5 size-5 text-base-content/35"
+                class="pointer-events-none absolute left-3 top-1/2 size-5 -translate-y-1/2 text-base-content/35"
               />
               <.input
                 field={@filter_form[:q]}
@@ -210,7 +210,14 @@ defmodule FaultlineWeb.IssueLive.Index do
               <span class="block text-xs font-semibold uppercase tracking-[0.14em] text-base-content/45">
                 Project
               </span>
-              <details id="project-filter-menu" class="group relative">
+              <details
+                id="project-filter-menu"
+                class="group relative"
+                data-close-on-click-away
+                phx-click-away={JS.remove_attribute("open")}
+                phx-window-keydown={JS.remove_attribute("open")}
+                phx-key="escape"
+              >
                 <summary class={dropdown_summary_class()}>
                   <span class="flex min-w-0 items-center gap-2">
                     <span
@@ -293,7 +300,14 @@ defmodule FaultlineWeb.IssueLive.Index do
               <span class="block text-xs font-semibold uppercase tracking-[0.14em] text-base-content/45">
                 Status
               </span>
-              <details id="status-filter-menu" class="group relative">
+              <details
+                id="status-filter-menu"
+                class="group relative"
+                data-close-on-click-away
+                phx-click-away={JS.remove_attribute("open")}
+                phx-window-keydown={JS.remove_attribute("open")}
+                phx-key="escape"
+              >
                 <summary class={dropdown_summary_class()}>
                   <span class="min-w-0 truncate">{@selected_status_label}</span>
                   <.icon
@@ -326,7 +340,14 @@ defmodule FaultlineWeb.IssueLive.Index do
               <span class="block text-xs font-semibold uppercase tracking-[0.14em] text-base-content/45">
                 Last seen
               </span>
-              <details id="time-filter-menu" class="group relative">
+              <details
+                id="time-filter-menu"
+                class="group relative"
+                data-close-on-click-away
+                phx-click-away={JS.remove_attribute("open")}
+                phx-window-keydown={JS.remove_attribute("open")}
+                phx-key="escape"
+              >
                 <summary class={dropdown_summary_class()}>
                   <span class="min-w-0 truncate">{@selected_time_label}</span>
                   <.icon
@@ -375,9 +396,8 @@ defmodule FaultlineWeb.IssueLive.Index do
         </.form>
 
         <section class="overflow-hidden rounded-lg border border-base-300 bg-base-100 shadow-sm">
-          <div class="grid grid-cols-[minmax(0,1fr)_10rem_9rem_5rem_5rem_10.5rem] items-center gap-4 border-b border-base-300 px-5 py-3 text-xs font-semibold uppercase tracking-[0.14em] text-base-content/50">
+          <div class="grid grid-cols-[minmax(0,1fr)_9rem_5rem_5rem_10.5rem] items-center gap-4 border-b border-base-300 px-5 py-3 text-xs font-semibold uppercase tracking-[0.14em] text-base-content/50">
             <span>Issue</span>
-            <span>Project</span>
             <span>Status</span>
             <span>Events</span>
             <span>Users</span>
@@ -402,28 +422,28 @@ defmodule FaultlineWeb.IssueLive.Index do
               :for={{id, issue} <- @streams.issues}
               id={id}
               navigate={issue_path(issue)}
-              class="grid grid-cols-[minmax(0,1fr)_10rem_9rem_5rem_5rem_10.5rem] items-center gap-4 px-5 py-4 transition hover:bg-base-200/70"
+              class="grid grid-cols-[minmax(0,1fr)_9rem_5rem_5rem_10.5rem] items-center gap-4 px-5 py-4 transition hover:bg-base-200/70"
             >
               <div class="min-w-0">
                 <p class="truncate font-semibold text-base-content">{issue.title}</p>
-                <p class="mt-1 truncate font-mono text-xs text-base-content/45">
-                  {issue.fingerprint}
-                </p>
-              </div>
-              <span class="flex min-w-0 items-center gap-2">
                 <span
-                  id={"issue-project-logo-#{issue.id}"}
-                  class={[
-                    "flex size-7 shrink-0 items-center justify-center rounded-md text-[0.65rem] font-black tracking-normal shadow-sm ring-1 ring-black/5",
-                    issue_project_tone_class(issue)
-                  ]}
+                  id={"issue-project-meta-#{issue.id}"}
+                  class="mt-2 flex min-w-0 items-center gap-2"
                 >
-                  {issue_project_mark(issue)}
+                  <span
+                    id={"issue-project-logo-#{issue.id}"}
+                    class={[
+                      "flex size-5 shrink-0 items-center justify-center rounded-sm text-[0.55rem] font-black tracking-normal shadow-sm ring-1 ring-black/5",
+                      issue_project_tone_class(issue)
+                    ]}
+                  >
+                    {issue_project_mark(issue)}
+                  </span>
+                  <span class="min-w-0 truncate text-sm font-semibold text-base-content/70">
+                    {project_name(issue)}
+                  </span>
                 </span>
-                <span class="min-w-0 truncate text-sm font-semibold text-base-content/70">
-                  {project_name(issue)}
-                </span>
-              </span>
+              </div>
               <span>
                 <span class={status_class(issue.status)}>{issue.status}</span>
               </span>
