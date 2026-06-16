@@ -42,14 +42,16 @@ Layout:
 - Main content uses segmented sections for `Alert rules` and `Drop rules`.
 - Existing rules stay in stream-backed lists.
 - Empty states stay visible but become smaller and action-oriented.
-- Rule creation should move out of the always-visible right rail. Use an inline creation panel or drawer-like panel that appears after choosing the rule type.
+- Rule creation must move out of the always-visible right rail. The default `Rules` tab should show lists and creation entry points, not two stacked forms.
+- The right-side builder should show a lightweight placeholder by default, then show exactly one form after the user chooses `New alert rule` or `New drop rule`.
 
 Creation flow:
 
-1. User clicks `New rule`.
-2. User chooses rule family: `Alert rule` or `Drop rule`.
+1. User clicks `New alert rule` or `New drop rule`.
+2. The right-side builder switches from the placeholder to that rule form.
 3. Alert rule form shows trigger, channel, target, threshold, and cooldown.
 4. Drop rule form shows field, match, value, and enabled state.
+5. Saving successfully clears the form back to the placeholder and updates the relevant stream/list.
 
 Channel extensibility:
 
