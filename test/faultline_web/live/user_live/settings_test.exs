@@ -24,16 +24,41 @@ defmodule FaultlineWeb.UserLive.SettingsTest do
       assert %{"error" => "You must log in to access this page."} = flash
     end
 
-    test "redirects if user is not in sudo mode", %{conn: conn} do
-      {:ok, conn} =
+    test "renders settings page when user is not in sudo mode", %{conn: conn} do
+      {:ok, _lv, html} =
         conn
         |> log_in_user(user_fixture(),
           token_authenticated_at: DateTime.add(DateTime.utc_now(:second), -11, :minute)
         )
         |> live(~p"/users/settings")
-        |> follow_redirect(conn, ~p"/users/log-in")
 
-      assert conn.resp_body =~ "You must re-authenticate to access this page."
+      assert html =~ "Account Settings"
+    end
+
+    test "account menu settings link opens settings for logged-in users", %{conn: conn} do
+      user = user_fixture()
+
+      conn =
+        log_in_user(conn, user,
+          token_authenticated_at: DateTime.add(DateTime.utc_now(:second), -11, :minute)
+        )
+
+      {:ok, view, _html} =
+        live(conn, ~p"/issues?project=-1")
+
+      assert has_element?(
+               view,
+               ~s|#account-settings-link[href="/users/settings"]:not([data-phx-link])|
+             )
+
+      {:ok, settings_conn} =
+        view
+        |> element(~s|#account-menu a[href="/users/settings"]|)
+        |> render_click()
+        |> follow_redirect(conn, ~p"/users/settings")
+
+      html = html_response(settings_conn, 200)
+      assert html =~ "Account Settings"
     end
   end
 
@@ -86,6 +111,25 @@ defmodule FaultlineWeb.UserLive.SettingsTest do
 
       assert result =~ "Change Email"
       assert result =~ "did not change"
+    end
+
+    test "redirects to login when submitting outside sudo mode", %{conn: conn, user: user} do
+      old_authenticated_at = DateTime.add(DateTime.utc_now(:second), -11, :minute)
+      conn = log_in_user(conn, user, token_authenticated_at: old_authenticated_at)
+      {:ok, lv, _html} = live(conn, ~p"/users/settings")
+
+      redirect_result =
+        lv
+        |> form("#email_form", %{
+          "user" => %{"email" => unique_user_email()}
+        })
+        |> render_submit()
+
+      assert {:error, {:redirect, %{to: path}}} = redirect_result
+      assert path == ~p"/users/log-in"
+
+      {:ok, conn} = follow_redirect(redirect_result, conn, ~p"/users/log-in")
+      assert conn.resp_body =~ "You must re-authenticate to access this page."
     end
   end
 

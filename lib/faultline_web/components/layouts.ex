@@ -265,7 +265,8 @@ defmodule FaultlineWeb.Layouts do
 
         <div class="py-1">
           <.link
-            navigate={~p"/users/settings"}
+            id="account-settings-link"
+            href={~p"/users/settings"}
             class="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold transition hover:bg-base-200"
           >
             <.icon name="hero-cog-6-tooth" class="size-4 text-base-content/60" /> Settings
