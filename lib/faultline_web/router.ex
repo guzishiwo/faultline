@@ -31,10 +31,12 @@ defmodule FaultlineWeb.Router do
       live "/projects", ProjectLive.Index, :index
       live "/projects/new", ProjectLive.New, :new
       live "/issues", IssueLive.Index, :index
+      live "/p/:project_slug/platform/getting-started", ProjectLive.GettingStarted, :show
       live "/p/:project_slug/settings", ProjectLive.Settings, :edit
       live "/p/:project_slug/usage", ProjectLive.Usage, :show
       live "/p/:project_slug/issues", IssueLive.Index, :index
       live "/p/:project_slug/issues/:id", IssueLive.Show, :show
+      live "/projects/:project_id/platform/getting-started", ProjectLive.GettingStarted, :show
       live "/projects/:project_id/settings", ProjectLive.Settings, :edit
       live "/projects/:project_id/usage", ProjectLive.Usage, :show
       live "/projects/:project_id/issues", IssueLive.Index, :index

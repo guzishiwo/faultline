@@ -29,6 +29,7 @@ import "prismjs/components/prism-markup"
 import "prismjs/components/prism-markup-templating"
 import "prismjs/components/prism-c"
 import "prismjs/components/prism-cpp"
+import "prismjs/components/prism-bash"
 import "prismjs/components/prism-javascript"
 import "prismjs/components/prism-jsx"
 import "prismjs/components/prism-typescript"
@@ -46,6 +47,7 @@ import "prismjs/components/prism-objectivec"
 import "prismjs/components/prism-dart"
 import "prismjs/components/prism-elixir"
 import "prismjs/components/prism-json"
+import "prismjs/components/prism-properties"
 import topbar from "../vendor/topbar"
 
 Prism.manual = true
@@ -67,11 +69,34 @@ const CodeHighlight = {
   },
 }
 
+const ClipboardCopy = {
+  mounted() {
+    this.handleClick = async () => {
+      const text = this.el.dataset.copy || ""
+      await navigator.clipboard.writeText(text)
+
+      const label = this.el.querySelector("[data-copy-label]")
+      if (!label) return
+
+      const original = label.textContent
+      label.textContent = "Copied"
+      window.setTimeout(() => {
+        label.textContent = original
+      }, 1200)
+    }
+
+    this.el.addEventListener("click", this.handleClick)
+  },
+  destroyed() {
+    this.el.removeEventListener("click", this.handleClick)
+  },
+}
+
 const csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 const liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
   params: {_csrf_token: csrfToken},
-  hooks: {...colocatedHooks, CodeHighlight},
+  hooks: {...colocatedHooks, CodeHighlight, ClipboardCopy},
 })
 
 // Show progress bar on live navigation and form submits

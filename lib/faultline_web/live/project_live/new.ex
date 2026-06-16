@@ -38,7 +38,7 @@ defmodule FaultlineWeb.ProjectLive.New do
         {:noreply,
          socket
          |> put_flash(:info, "#{project.name} is ready for SDK events.")
-         |> push_navigate(to: ~p"/projects")}
+         |> push_navigate(to: ~p"/p/#{project.slug}/platform/getting-started")}
 
       {:error, %Ecto.Changeset{} = changeset} ->
         {:noreply, assign_form(socket, Map.put(changeset, :action, :insert))}
