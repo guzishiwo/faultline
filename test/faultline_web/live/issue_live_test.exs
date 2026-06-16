@@ -235,9 +235,11 @@ defmodule FaultlineWeb.IssueLiveTest do
 
     assert has_element?(view, "#issue-event-#{newer_event.id}")
     assert has_element?(view, "#stack-frame-1")
-    assert has_element?(view, "#event-overview")
-    assert has_element?(view, "#event-context")
-    assert has_element?(view, "#event-sdk")
+    assert has_element?(view, "details#event-overview[open] summary", "Overview")
+    assert has_element?(view, "details#event-stacktrace[open] summary", "Stacktrace")
+    assert has_element?(view, "details#event-context[open] summary", "Context")
+    assert has_element?(view, "details#event-sdk[open] summary", "SDK and runtime")
+    assert has_element?(view, "details#event-breadcrumbs summary", "Breadcrumbs")
     assert has_element?(view, "#event-context-runtime", "node")
     assert has_element?(view, "#event-context-app", "100.3 MB")
     assert has_element?(view, "#event-context-app", "3.1 GB")
@@ -245,6 +247,7 @@ defmodule FaultlineWeb.IssueLiveTest do
     assert has_element?(view, "#event-context-device", "18 GB")
     assert has_element?(view, "#event-context-device", "11")
     assert has_element?(view, "#event-context-trace", "ab08bb5f21f04795ad26d8d3f919379d")
+    refute has_element?(view, "#event-context .font-medium")
     assert has_element?(view, "#stack-frame-1-source", "const amount = cart.total")
     assert has_element?(view, "#stack-frame-1-source", "throw new TypeError")
     assert has_element?(view, "#stack-frame-1-source", "return charge")
@@ -254,6 +257,7 @@ defmodule FaultlineWeb.IssueLiveTest do
     assert has_element?(view, "#stack-frame-1-var-amount", "149.99")
     assert has_element?(view, "#event-modules", "@sentry/node")
     assert has_element?(view, "#event-sdk", "sentry.javascript.node")
+    refute has_element?(view, "#event-sdk .font-medium")
     assert has_element?(view, "#load-raw-event-#{newer_event.id}")
 
     view
