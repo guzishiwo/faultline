@@ -101,7 +101,7 @@ defmodule FaultlineWeb.IssueLive.Show do
               <.icon name="hero-arrow-left" class="size-4" /> Issues
             </.link>
             <div>
-              <p class="text-sm font-semibold uppercase tracking-[0.18em] text-orange-600">
+              <p class="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
                 {@project.name}
               </p>
               <h1 class="mt-2 max-w-4xl text-3xl font-semibold tracking-normal text-base-content">
@@ -117,13 +117,7 @@ defmodule FaultlineWeb.IssueLive.Show do
               type="button"
               phx-click="set_status"
               phx-value-status={status}
-              class={[
-                "rounded-lg border px-3 py-2 text-sm font-semibold transition hover:-translate-y-0.5",
-                @issue.status == status &&
-                  "border-base-content bg-base-content text-base-100 shadow-sm",
-                @issue.status != status &&
-                  "border-base-300 bg-base-100 text-base-content/70 hover:text-base-content"
-              ]}
+              class={status_button_class(status, @issue.status)}
             >
               {status}
             </button>
@@ -194,7 +188,7 @@ defmodule FaultlineWeb.IssueLive.Show do
                   autocomplete="off"
                   phx-debounce="300"
                   aria-label="Filter issue events"
-                  class="h-10 w-full rounded-lg border border-base-300 bg-base-100 pl-9 pr-3 text-sm text-base-content shadow-sm outline-none transition placeholder:text-base-content/35 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                  class="h-10 w-full rounded-lg border border-base-300 bg-base-100 pl-9 pr-3 text-sm text-base-content shadow-sm outline-none transition placeholder:text-base-content/35 focus:border-primary focus:ring-2 focus:ring-primary/20"
                 />
               </div>
             </.form>
@@ -400,7 +394,9 @@ defmodule FaultlineWeb.IssueLive.Show do
           <dl class="mt-2 grid gap-1 text-sm">
             <div :for={{key, value} <- values} class="grid grid-cols-[7rem_minmax(0,1fr)] gap-2">
               <dt class="break-words text-base-content/50">{key}</dt>
-              <dd class="break-words font-medium text-base-content">{format_detail(value)}</dd>
+              <dd class="break-words font-medium text-base-content">
+                {format_context_detail(key, value)}
+              </dd>
             </div>
           </dl>
         </article>
@@ -494,7 +490,7 @@ defmodule FaultlineWeb.IssueLive.Show do
         id={"stack-frame-#{@index}-source-line-#{line.id}"}
         class={[
           "grid grid-cols-[3.5rem_minmax(0,1fr)] font-mono text-xs leading-6",
-          line.current? && "bg-orange-500/10 text-base-content",
+          line.current? && "bg-primary/10 text-base-content",
           !line.current? && "text-base-content/65"
         ]}
       >
@@ -619,6 +615,35 @@ defmodule FaultlineWeb.IssueLive.Show do
     compact_exception(event) || event.message || "Event"
   end
 
+  defp status_button_class(status, current_status) do
+    [
+      "rounded-lg border px-3 py-2 text-sm font-semibold transition hover:-translate-y-0.5",
+      status_selected_class(status, status == current_status)
+    ]
+  end
+
+  defp status_selected_class("unresolved", true),
+    do: "border-error/40 bg-error/10 text-error shadow-sm ring-1 ring-error/10"
+
+  defp status_selected_class("unresolved", false),
+    do:
+      "border-error/25 bg-base-100 text-error/80 hover:border-error/40 hover:bg-error/5 hover:text-error"
+
+  defp status_selected_class("resolved", true),
+    do: "border-success/40 bg-success/10 text-success shadow-sm ring-1 ring-success/10"
+
+  defp status_selected_class("resolved", false),
+    do:
+      "border-success/25 bg-base-100 text-success/80 hover:border-success/40 hover:bg-success/5 hover:text-success"
+
+  defp status_selected_class("ignored", true),
+    do:
+      "border-base-content/25 bg-base-200 text-base-content shadow-sm ring-1 ring-base-content/5"
+
+  defp status_selected_class("ignored", false),
+    do:
+      "border-base-300 bg-base-100 text-base-content/60 hover:border-base-content/30 hover:bg-base-200 hover:text-base-content"
+
   defp compact_exception(event) do
     [event.exception_type, event.exception_value]
     |> Enum.reject(&is_nil/1)
@@ -726,6 +751,54 @@ defmodule FaultlineWeb.IssueLive.Show do
   end
 
   defp sorted_take(_values, _count), do: []
+
+  defp format_context_detail(key, value) when is_integer(value) do
+    if memory_key?(key) and value >= 0 do
+      format_bytes(value)
+    else
+      format_detail(value)
+    end
+  end
+
+  defp format_context_detail(_key, value), do: format_detail(value)
+
+  defp memory_key?(key) do
+    key
+    |> to_string()
+    |> String.downcase()
+    |> String.contains?("memory")
+  end
+
+  defp format_bytes(bytes) when bytes >= 1024 * 1024 * 1024 do
+    bytes
+    |> Kernel./(1024 * 1024 * 1024)
+    |> format_unit("GB")
+  end
+
+  defp format_bytes(bytes) when bytes >= 1024 * 1024 do
+    bytes
+    |> Kernel./(1024 * 1024)
+    |> format_unit("MB")
+  end
+
+  defp format_bytes(bytes) when bytes >= 1024 do
+    bytes
+    |> Kernel./(1024)
+    |> format_unit("KB")
+  end
+
+  defp format_bytes(bytes), do: "#{bytes} B"
+
+  defp format_unit(value, unit) do
+    formatted =
+      if value == trunc(value) do
+        Integer.to_string(trunc(value))
+      else
+        :erlang.float_to_binary(value, decimals: 1)
+      end
+
+    "#{formatted} #{unit}"
+  end
 
   defp context_order("app"), do: 1
   defp context_order("runtime"), do: 2

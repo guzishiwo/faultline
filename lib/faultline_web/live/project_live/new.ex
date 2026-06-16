@@ -73,7 +73,7 @@ defmodule FaultlineWeb.ProjectLive.New do
           </.link>
 
           <div class="space-y-3">
-            <p class="text-sm font-semibold uppercase tracking-[0.18em] text-orange-600">
+            <p class="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
               New project
             </p>
             <h1 class="text-4xl font-semibold tracking-normal text-base-content sm:text-5xl">
@@ -111,7 +111,7 @@ defmodule FaultlineWeb.ProjectLive.New do
                     value={@platform_query}
                     placeholder="Filter platforms"
                     phx-debounce="200"
-                    class="w-full rounded-lg border border-base-300 bg-base-100 px-3 py-2 text-sm outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                    class="w-full rounded-lg border border-base-300 bg-base-100 px-3 py-2 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
                   />
                 </div>
               </div>
@@ -129,7 +129,7 @@ defmodule FaultlineWeb.ProjectLive.New do
                   class={[
                     "shrink-0 border-b-2 px-3 py-2 text-sm font-semibold transition",
                     @platform_category == category.id &&
-                      "border-orange-500 text-orange-600",
+                      "border-primary text-primary",
                     @platform_category != category.id &&
                       "border-transparent text-base-content/55 hover:text-base-content"
                   ]}
@@ -150,7 +150,7 @@ defmodule FaultlineWeb.ProjectLive.New do
                   class={[
                     "group relative flex min-h-20 cursor-pointer items-center gap-3 rounded-lg border p-3 text-left transition",
                     @selected_platform == platform.id &&
-                      "border-orange-500 bg-orange-50 ring-2 ring-orange-500/15 dark:bg-orange-950/20",
+                      "border-primary bg-primary/10 ring-2 ring-primary/15 dark:bg-primary/10",
                     @selected_platform != platform.id &&
                       "border-base-300 bg-base-100 hover:border-base-content/25 hover:bg-base-200/50"
                   ]}
@@ -191,7 +191,7 @@ defmodule FaultlineWeb.ProjectLive.New do
                   </span>
                   <span
                     :if={@selected_platform == platform.id}
-                    class="flex size-6 shrink-0 items-center justify-center rounded-full bg-orange-600 text-white"
+                    class="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-content"
                   >
                     <.icon name="hero-check-mini" class="size-4" />
                   </span>

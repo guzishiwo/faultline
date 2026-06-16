@@ -39,7 +39,7 @@ defmodule FaultlineWeb.Admin.UserLive.Index do
       <div class="w-full space-y-8">
         <section class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_16rem] lg:items-end">
           <div class="space-y-3">
-            <p class="text-sm font-semibold uppercase tracking-[0.18em] text-orange-600">
+            <p class="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
               Admin
             </p>
             <h1 class="text-4xl font-semibold tracking-normal text-base-content sm:text-5xl">
@@ -85,7 +85,7 @@ defmodule FaultlineWeb.Admin.UserLive.Index do
                 id={"user-role-#{user.id}"}
                 class={[
                   "w-fit rounded-md px-2 py-1 text-xs font-semibold",
-                  user.role == "admin" && "bg-orange-100 text-orange-800",
+                  user.role == "admin" && "bg-primary/10 text-primary",
                   user.role == "member" && "bg-base-200 text-base-content/70"
                 ]}
               >

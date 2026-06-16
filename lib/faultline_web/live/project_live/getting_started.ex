@@ -27,7 +27,7 @@ defmodule FaultlineWeb.ProjectLive.GettingStarted do
               <.icon name="hero-arrow-left" class="size-4" /> Projects
             </.link>
             <div>
-              <p class="text-sm font-semibold uppercase tracking-[0.18em] text-orange-600">
+              <p class="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
                 {@project.name}
               </p>
               <h1 class="mt-2 text-3xl font-semibold tracking-normal text-base-content">

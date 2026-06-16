@@ -7,7 +7,7 @@ defmodule FaultlineWeb.UserLive.Login do
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
-      <div class="mx-auto max-w-sm space-y-4">
+      <div class="mx-auto max-w-sm space-y-5">
         <div class="text-center">
           <.header>
             <p>Log in</p>
@@ -17,7 +17,7 @@ defmodule FaultlineWeb.UserLive.Login do
               <% else %>
                 Don't have an account? <.link
                   navigate={~p"/users/register"}
-                  class="font-semibold text-brand hover:underline"
+                  class="font-semibold text-primary hover:underline"
                   phx-no-format
                 >Sign up</.link> for an account now.
               <% end %>
@@ -25,12 +25,19 @@ defmodule FaultlineWeb.UserLive.Login do
           </.header>
         </div>
 
-        <div :if={local_mail_adapter?()} class="alert alert-info">
-          <.icon name="hero-information-circle" class="size-6 shrink-0" />
+        <div
+          :if={local_mail_adapter?()}
+          id="local-mail-adapter-notice"
+          class="flex items-start gap-3 rounded-lg border border-base-300 bg-base-100 px-4 py-3 text-sm text-base-content/70 shadow-sm"
+        >
+          <.icon name="hero-information-circle" class="mt-0.5 size-5 shrink-0 text-base-content/45" />
           <div>
-            <p>You are running the local mail adapter.</p>
+            <p class="font-semibold text-base-content">You are running the local mail adapter.</p>
             <p>
-              To see sent emails, visit <.link href="/dev/mailbox" class="underline">the mailbox page</.link>.
+              To see sent emails, visit <.link
+                href="/dev/mailbox"
+                class="font-semibold text-base-content underline underline-offset-4"
+              >the mailbox page</.link>.
             </p>
           </div>
         </div>
@@ -52,7 +59,7 @@ defmodule FaultlineWeb.UserLive.Login do
             required
             phx-mounted={JS.focus()}
           />
-          <.button class="btn btn-primary w-full">
+          <.button id="login-magic-submit" class={primary_button_class()}>
             Log in with email <span aria-hidden="true">→</span>
           </.button>
         </.form>
@@ -83,10 +90,15 @@ defmodule FaultlineWeb.UserLive.Login do
             autocomplete="current-password"
             spellcheck="false"
           />
-          <.button class="btn btn-primary w-full" name={@form[:remember_me].name} value="true">
+          <.button
+            id="login-password-submit"
+            class={primary_button_class()}
+            name={@form[:remember_me].name}
+            value="true"
+          >
             Log in and stay logged in <span aria-hidden="true">→</span>
           </.button>
-          <.button class="btn btn-primary btn-soft w-full mt-2">
+          <.button id="login-once-submit" class={secondary_button_class()}>
             Log in only this time
           </.button>
         </.form>
@@ -130,5 +142,13 @@ defmodule FaultlineWeb.UserLive.Login do
 
   defp local_mail_adapter? do
     Application.get_env(:faultline, Faultline.Mailer)[:adapter] == Swoosh.Adapters.Local
+  end
+
+  defp primary_button_class do
+    "inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-base-content px-4 text-sm font-semibold text-base-100 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-base-content/20"
+  end
+
+  defp secondary_button_class do
+    "mt-2 inline-flex h-12 w-full items-center justify-center rounded-lg border border-base-300 bg-base-100 px-4 text-sm font-semibold text-base-content shadow-sm transition hover:-translate-y-0.5 hover:bg-base-200/70 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-base-content/20"
   end
 end

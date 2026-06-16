@@ -26,7 +26,7 @@ defmodule FaultlineWeb.ProjectLive.Usage do
               <.icon name="hero-arrow-left" class="size-4" /> Project settings
             </.link>
             <div>
-              <p class="text-sm font-semibold uppercase tracking-[0.18em] text-orange-600">
+              <p class="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
                 {@usage.project.name}
               </p>
               <h1 class="mt-2 text-3xl font-semibold tracking-normal text-base-content">

@@ -209,6 +209,22 @@ defmodule FaultlineWeb.IssueLiveTest do
     {:ok, view, _html} = live(conn, ~p"/p/#{project.slug}/issues/#{older_event.issue_id}")
 
     assert has_element?(view, "#issue-status", "unresolved")
+
+    assert has_element?(
+             view,
+             ~s|#set-status-unresolved[class*="border-error/40"][class*="bg-error/10"][class*="text-error"]|
+           )
+
+    assert has_element?(
+             view,
+             ~s|#set-status-resolved[class*="border-success/25"][class*="text-success"]|
+           )
+
+    assert has_element?(
+             view,
+             ~s|#set-status-ignored[class*="border-base-300"][class*="text-base-content/60"]|
+           )
+
     assert has_element?(view, "#issue-occurrences")
     assert has_element?(view, "#select-event-#{older_event.id}")
     assert has_element?(view, "#select-event-#{newer_event.id}")
@@ -223,7 +239,11 @@ defmodule FaultlineWeb.IssueLiveTest do
     assert has_element?(view, "#event-context")
     assert has_element?(view, "#event-sdk")
     assert has_element?(view, "#event-context-runtime", "node")
+    assert has_element?(view, "#event-context-app", "100.3 MB")
+    assert has_element?(view, "#event-context-app", "3.1 GB")
     assert has_element?(view, "#event-context-device", "Apple M3 Pro")
+    assert has_element?(view, "#event-context-device", "18 GB")
+    assert has_element?(view, "#event-context-device", "11")
     assert has_element?(view, "#event-context-trace", "ab08bb5f21f04795ad26d8d3f919379d")
     assert has_element?(view, "#stack-frame-1-source", "const amount = cart.total")
     assert has_element?(view, "#stack-frame-1-source", "throw new TypeError")
@@ -241,6 +261,21 @@ defmodule FaultlineWeb.IssueLiveTest do
     |> render_click()
 
     assert has_element?(view, "#issue-status", "resolved")
+
+    assert has_element?(
+             view,
+             ~s|#set-status-resolved[class*="border-success/40"][class*="bg-success/10"][class*="text-success"]|
+           )
+
+    assert has_element?(
+             view,
+             ~s|#set-status-unresolved[class*="border-error/25"][class*="text-error"]|
+           )
+
+    assert has_element?(
+             view,
+             ~s|#set-status-ignored[class*="border-base-300"][class*="text-base-content/60"]|
+           )
 
     view
     |> element("#select-event-#{older_event.id}")
@@ -453,7 +488,12 @@ defmodule FaultlineWeb.IssueLiveTest do
       "device" => %{
         "arch" => "arm64",
         "cpu_description" => "Apple M3 Pro",
+        "memory_size" => 19_327_352_832,
         "processor_count" => 11
+      },
+      "app" => %{
+        "app_memory" => 105_168_896,
+        "free_memory" => 3_376_431_104
       },
       "runtime" => %{"name" => "node", "version" => "v25.8.2"},
       "trace" => %{

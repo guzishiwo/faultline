@@ -1,16 +1,34 @@
 defmodule FaultlineWeb.UserLive.LoginTest do
-  use FaultlineWeb.ConnCase, async: true
+  use FaultlineWeb.ConnCase, async: false
 
   import Phoenix.LiveViewTest
   import Faultline.AccountsFixtures
 
   describe "login page" do
     test "renders login page", %{conn: conn} do
-      {:ok, _lv, html} = live(conn, ~p"/users/log-in")
+      original_mailer_config = Application.get_env(:faultline, Faultline.Mailer)
+
+      Application.put_env(
+        :faultline,
+        Faultline.Mailer,
+        Keyword.put(original_mailer_config, :adapter, Swoosh.Adapters.Local)
+      )
+
+      on_exit(fn ->
+        Application.put_env(:faultline, Faultline.Mailer, original_mailer_config)
+      end)
+
+      {:ok, view, html} = live(conn, ~p"/users/log-in")
 
       assert html =~ "Log in"
       assert html =~ "Sign up"
       assert html =~ "Log in with email"
+      assert has_element?(view, "#local-mail-adapter-notice.border-base-300")
+      assert has_element?(view, "#login-magic-submit.bg-base-content")
+      assert has_element?(view, "#login-password-submit.bg-base-content")
+      assert has_element?(view, "#login-once-submit.border-base-300")
+      refute has_element?(view, "#local-mail-adapter-notice.alert-info")
+      refute has_element?(view, "#login-magic-submit.btn-primary")
     end
   end
 

@@ -153,7 +153,7 @@ defmodule FaultlineWeb.IssueLive.Index do
         <header class="flex flex-col gap-4 border-b border-base-300 pb-5 lg:flex-row lg:items-end lg:justify-between">
           <div class="space-y-2">
             <div>
-              <p class="text-sm font-semibold uppercase tracking-[0.18em] text-orange-600">
+              <p class="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
                 {@scope_label}
               </p>
               <h1 class="mt-2 text-3xl font-semibold tracking-normal text-base-content">
@@ -200,7 +200,7 @@ defmodule FaultlineWeb.IssueLive.Index do
                 autocomplete="off"
                 phx-debounce="300"
                 aria-label="Search issues by text or key value filters"
-                class="h-12 w-full rounded-lg border border-base-300 bg-base-100 pl-10 pr-10 text-sm text-base-content shadow-sm outline-none transition placeholder:text-base-content/35 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20"
+                class="h-12 w-full rounded-lg border border-base-300 bg-base-100 pl-10 pr-10 text-sm text-base-content shadow-sm outline-none transition placeholder:text-base-content/35 focus:border-primary focus:ring-2 focus:ring-primary/20"
               />
             </div>
           </div>
@@ -579,13 +579,13 @@ defmodule FaultlineWeb.IssueLive.Index do
   defp filters_active?(_search_query, _project_filter, _status_filter, _time_filter), do: true
 
   defp dropdown_summary_class do
-    "flex h-12 cursor-pointer list-none items-center justify-between gap-3 rounded-lg border border-base-300 bg-base-100 px-3 text-sm font-semibold text-base-content shadow-sm outline-none transition hover:border-base-content/25 focus-visible:border-orange-500 focus-visible:ring-2 focus-visible:ring-orange-500/20 [&::-webkit-details-marker]:hidden"
+    "flex h-12 cursor-pointer list-none items-center justify-between gap-3 rounded-lg border border-base-300 bg-base-100 px-3 text-sm font-semibold text-base-content shadow-sm outline-none transition hover:border-base-content/25 focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 [&::-webkit-details-marker]:hidden"
   end
 
   defp dropdown_option_class(selected?) do
     [
       "flex w-full items-center gap-3 rounded-md px-2.5 py-2 text-left transition hover:bg-base-200",
-      selected? && "bg-orange-50 text-orange-700"
+      selected? && "bg-primary/10 text-primary"
     ]
   end
 

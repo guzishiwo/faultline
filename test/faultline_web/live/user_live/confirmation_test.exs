@@ -17,8 +17,11 @@ defmodule FaultlineWeb.UserLive.ConfirmationTest do
           Accounts.deliver_login_instructions(user, url)
         end)
 
-      {:ok, _lv, html} = live(conn, ~p"/users/log-in/#{token}")
+      {:ok, view, html} = live(conn, ~p"/users/log-in/#{token}")
       assert html =~ "Confirm and stay logged in"
+      assert has_element?(view, "#confirm-stay-logged-in.bg-base-content")
+      assert has_element?(view, "#confirm-once.border-base-300")
+      refute has_element?(view, "#confirm-stay-logged-in.btn-primary")
     end
 
     test "renders login page for confirmed user", %{conn: conn, confirmed_user: user} do
@@ -27,9 +30,12 @@ defmodule FaultlineWeb.UserLive.ConfirmationTest do
           Accounts.deliver_login_instructions(user, url)
         end)
 
-      {:ok, _lv, html} = live(conn, ~p"/users/log-in/#{token}")
+      {:ok, view, html} = live(conn, ~p"/users/log-in/#{token}")
       refute html =~ "Confirm my account"
       assert html =~ "Keep me logged in on this device"
+      assert has_element?(view, "#login-token-stay-logged-in.bg-base-content")
+      assert has_element?(view, "#login-token-once.border-base-300")
+      refute has_element?(view, "#login-token-stay-logged-in.btn-primary")
     end
 
     test "renders login page for already logged in user", %{conn: conn, confirmed_user: user} do

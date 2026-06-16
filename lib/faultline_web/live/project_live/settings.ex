@@ -190,7 +190,7 @@ defmodule FaultlineWeb.ProjectLive.Settings do
               <.icon name="hero-arrow-left" class="size-4" /> Projects
             </.link>
             <div>
-              <p class="text-sm font-semibold uppercase tracking-[0.18em] text-orange-600">
+              <p class="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
                 {@project.name}
               </p>
               <h1 class="mt-2 text-3xl font-semibold tracking-normal text-base-content">
@@ -223,7 +223,7 @@ defmodule FaultlineWeb.ProjectLive.Settings do
             class="rounded-lg border border-base-300 bg-base-100 p-5 shadow-sm"
           >
             <div class="flex items-start gap-3">
-              <div class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-orange-100 text-orange-700">
+              <div class="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                 <.icon name="hero-key" class="size-5" />
               </div>
               <div class="min-w-0 flex-1">
@@ -432,7 +432,7 @@ defmodule FaultlineWeb.ProjectLive.Settings do
               <div id="alert-rules" phx-update="stream" class="divide-y divide-base-300">
                 <div id="alert-rules-empty-state" class="hidden px-5 py-12 text-center only:block">
                   <div class="mx-auto max-w-sm">
-                    <div class="mx-auto flex size-12 items-center justify-center rounded-full bg-orange-100 text-orange-700">
+                    <div class="mx-auto flex size-12 items-center justify-center rounded-full bg-primary/10 text-primary">
                       <.icon name="hero-bell-alert" class="size-6" />
                     </div>
                     <p class="mt-4 font-semibold text-base-content">No alert rules yet</p>

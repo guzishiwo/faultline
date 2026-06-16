@@ -431,7 +431,7 @@ defmodule Faultline.Search.Store.SQLite do
     |> Enum.map(&String.trim/1)
     |> Enum.reject(&(&1 == ""))
     |> Enum.map(&String.replace(&1, "\"", "\"\""))
-    |> Enum.map(&~s("#{&1}"))
+    |> Enum.map(&~s("#{&1}"*))
     |> Enum.join(" ")
   end
 end

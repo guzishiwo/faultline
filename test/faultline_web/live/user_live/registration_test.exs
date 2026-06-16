@@ -6,10 +6,12 @@ defmodule FaultlineWeb.UserLive.RegistrationTest do
 
   describe "Registration page" do
     test "renders registration page", %{conn: conn} do
-      {:ok, _lv, html} = live(conn, ~p"/users/register")
+      {:ok, view, html} = live(conn, ~p"/users/register")
 
       assert html =~ "Register"
       assert html =~ "Log in"
+      assert has_element?(view, "#create-account-button.bg-base-content")
+      refute has_element?(view, "#create-account-button.btn-primary")
     end
 
     test "redirects if already logged in", %{conn: conn} do

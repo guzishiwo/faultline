@@ -79,6 +79,21 @@ defmodule Faultline.Search.SQLiteStoreTest do
              )
   end
 
+  test "searches issues by text term prefixes" do
+    project = project_fixture()
+
+    target =
+      "javascript.json"
+      |> fixture_payload()
+      |> put_in(["exception", "values", Access.at(0), "value"], "Checkout search target")
+      |> normalize_payload(project)
+
+    assert [target.issue_id] ==
+             "tar"
+             |> Search.search_issues(project_id: project.id)
+             |> Enum.sort()
+  end
+
   test "searches events inside an issue by tag filters" do
     project = project_fixture()
 

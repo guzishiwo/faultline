@@ -7,7 +7,7 @@ defmodule FaultlineWeb.UserLive.Confirmation do
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
-      <div class="mx-auto max-w-sm">
+      <div class="mx-auto max-w-sm space-y-5">
         <div class="text-center">
           <.header>Welcome {@user.email}</.header>
         </div>
@@ -23,14 +23,19 @@ defmodule FaultlineWeb.UserLive.Confirmation do
         >
           <input type="hidden" name={@form[:token].name} value={@form[:token].value} />
           <.button
+            id="confirm-stay-logged-in"
             name={@form[:remember_me].name}
             value="true"
             phx-disable-with="Confirming..."
-            class="btn btn-primary w-full"
+            class={primary_button_class()}
           >
             Confirm and stay logged in
           </.button>
-          <.button phx-disable-with="Confirming..." class="btn btn-primary btn-soft w-full mt-2">
+          <.button
+            id="confirm-once"
+            phx-disable-with="Confirming..."
+            class={secondary_button_class()}
+          >
             Confirm and log in only this time
           </.button>
         </.form>
@@ -46,25 +51,37 @@ defmodule FaultlineWeb.UserLive.Confirmation do
         >
           <input type="hidden" name={@form[:token].name} value={@form[:token].value} />
           <%= if @current_scope do %>
-            <.button phx-disable-with="Logging in..." class="btn btn-primary w-full">
+            <.button
+              id="login-token-submit"
+              phx-disable-with="Logging in..."
+              class={primary_button_class()}
+            >
               Log in
             </.button>
           <% else %>
             <.button
+              id="login-token-stay-logged-in"
               name={@form[:remember_me].name}
               value="true"
               phx-disable-with="Logging in..."
-              class="btn btn-primary w-full"
+              class={primary_button_class()}
             >
               Keep me logged in on this device
             </.button>
-            <.button phx-disable-with="Logging in..." class="btn btn-primary btn-soft w-full mt-2">
+            <.button
+              id="login-token-once"
+              phx-disable-with="Logging in..."
+              class={secondary_button_class()}
+            >
               Log me in only this time
             </.button>
           <% end %>
         </.form>
 
-        <p :if={!@user.confirmed_at} class="alert alert-outline mt-8">
+        <p
+          :if={!@user.confirmed_at}
+          class="rounded-lg border border-base-300 bg-base-100 px-4 py-3 text-sm text-base-content/70 shadow-sm"
+        >
           Tip: If you prefer passwords, you can enable them in the user settings.
         </p>
       </div>
@@ -90,5 +107,13 @@ defmodule FaultlineWeb.UserLive.Confirmation do
   @impl true
   def handle_event("submit", %{"user" => params}, socket) do
     {:noreply, assign(socket, form: to_form(params, as: "user"), trigger_submit: true)}
+  end
+
+  defp primary_button_class do
+    "inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-base-content px-4 text-sm font-semibold text-base-100 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-base-content/20"
+  end
+
+  defp secondary_button_class do
+    "mt-2 inline-flex h-12 w-full items-center justify-center rounded-lg border border-base-300 bg-base-100 px-4 text-sm font-semibold text-base-content shadow-sm transition hover:-translate-y-0.5 hover:bg-base-200/70 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-base-content/20"
   end
 end

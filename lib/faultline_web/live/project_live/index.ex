@@ -20,7 +20,7 @@ defmodule FaultlineWeb.ProjectLive.Index do
       <div class="w-full space-y-8">
         <section class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-end">
           <div class="space-y-4">
-            <p class="text-sm font-semibold uppercase tracking-[0.18em] text-orange-600">
+            <p class="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
               Faultline Projects
             </p>
             <div class="space-y-3">
@@ -56,7 +56,7 @@ defmodule FaultlineWeb.ProjectLive.Index do
           <div id="projects" phx-update="stream" class="divide-y divide-base-300">
             <div id="projects-empty-state" class="hidden px-5 py-12 text-center only:block">
               <div class="mx-auto flex max-w-sm flex-col items-center gap-4">
-                <div class="rounded-full bg-orange-100 p-3 text-orange-700">
+                <div class="rounded-full bg-primary/10 p-3 text-primary">
                   <.icon name="hero-key" class="size-6" />
                 </div>
                 <div>
@@ -90,12 +90,12 @@ defmodule FaultlineWeb.ProjectLive.Index do
                     navigate={~p"/issues?project=#{project.id}"}
                     class="group inline-flex max-w-full items-center gap-2"
                   >
-                    <span class="truncate text-lg font-semibold text-base-content group-hover:text-orange-600">
+                    <span class="truncate text-lg font-semibold text-base-content group-hover:text-primary">
                       {project.name}
                     </span>
                     <.icon
                       name="hero-arrow-right"
-                      class="size-4 shrink-0 text-base-content/35 group-hover:text-orange-600"
+                      class="size-4 shrink-0 text-base-content/35 group-hover:text-primary"
                     />
                   </.link>
 

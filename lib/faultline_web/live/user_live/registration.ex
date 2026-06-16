@@ -8,13 +8,13 @@ defmodule FaultlineWeb.UserLive.Registration do
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
-      <div class="mx-auto max-w-sm">
+      <div class="mx-auto max-w-sm space-y-5">
         <div class="text-center">
           <.header>
             Register for an account
             <:subtitle>
               Already registered?
-              <.link navigate={~p"/users/log-in"} class="font-semibold text-brand hover:underline">
+              <.link navigate={~p"/users/log-in"} class="font-semibold text-primary hover:underline">
                 Log in
               </.link>
               to your account now.
@@ -33,7 +33,11 @@ defmodule FaultlineWeb.UserLive.Registration do
             phx-mounted={JS.focus()}
           />
 
-          <.button phx-disable-with="Creating account..." class="btn btn-primary w-full">
+          <.button
+            id="create-account-button"
+            phx-disable-with="Creating account..."
+            class={primary_button_class()}
+          >
             Create an account
           </.button>
         </.form>
@@ -85,5 +89,9 @@ defmodule FaultlineWeb.UserLive.Registration do
   defp assign_form(socket, %Ecto.Changeset{} = changeset) do
     form = to_form(changeset, as: "user")
     assign(socket, form: form)
+  end
+
+  defp primary_button_class do
+    "inline-flex h-12 w-full items-center justify-center gap-2 rounded-lg bg-base-content px-4 text-sm font-semibold text-base-100 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-base-content/20"
   end
 end
