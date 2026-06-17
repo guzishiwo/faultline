@@ -45,6 +45,5 @@ COPY rel/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 EXPOSE 4010
-VOLUME ["/data"]
 
 ENTRYPOINT ["/entrypoint.sh"]
