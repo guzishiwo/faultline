@@ -9,6 +9,33 @@ without running PostgreSQL, Redis, Kafka, ClickHouse, or object storage.
 > Status: early V1.0 work. The goal is a practical single-node open-source
 > edition, not a full Sentry replacement.
 
+## Why Faultline exists
+
+Most small teams do not need a complete observability platform just to answer
+one urgent question: "what broke in production, and how do we fix it?"
+
+Sentry is powerful, but self-hosting it is intentionally a large distributed
+system. GlitchTip is broader and covers error tracking, performance monitoring,
+uptime monitoring, and logs. Bugsink is closer to Faultline's self-hosted error
+tracking focus and is already a strong option.
+
+Faultline exists for a narrower reason: make Sentry-compatible error tracking
+feel like a normal application you can understand, run, back up, and maintain
+yourself. The open-source V1.0 line is deliberately single-node, SQLite-first,
+and focused on the daily issue triage workflow rather than becoming another
+large monitoring stack.
+
+The scope is intentionally small:
+
+- Keep the ingest path boring: accept common Sentry SDK payloads and store them
+  locally.
+- Keep operations boring: one Phoenix release, one SQLite database, one
+  persistent `/data` volume.
+- Keep the UI direct: fast issue scanning, readable event detail pages, useful
+  search, retention controls, and alerts without a maze of admin screens.
+- Keep the codebase maintainable: Phoenix contexts, LiveView screens, Ecto
+  schemas, and a small number of moving parts.
+
 ## What it does
 
 - Accepts Sentry SDK event ingestion through compatible store/envelope endpoints.
@@ -25,6 +52,74 @@ without running PostgreSQL, Redis, Kafka, ClickHouse, or object storage.
 - Not a full observability platform.
 - No session replay, profiling, metrics, APM, source maps, or minidumps yet.
 - Not intended for multi-node SaaS operation in the open-source V1.0 line.
+
+## Compared with Bugsink and GlitchTip
+
+Faultline is not trying to copy every feature from existing Sentry alternatives.
+It is making a different set of trade-offs.
+
+| Project | Best fit | Trade-off |
+| --- | --- | --- |
+| [Bugsink](https://www.bugsink.com/docs/) | Self-hosted Sentry SDK compatible error tracking with a mature Python/Django implementation and documented single-server performance work. | A strong direct alternative. Faultline's difference is Phoenix/LiveView, an Elixir codebase, and a compact console built around the triage workflow. |
+| [GlitchTip](https://glitchtip.com/documentation/) | Teams that want open-source error tracking plus performance monitoring, uptime monitoring, logs, hosted plans, and broader platform features. | More product surface area also means more concepts to configure and maintain. Faultline intentionally avoids that breadth in V1.0. |
+| Faultline | Small teams that want the lightest practical Sentry-compatible issue tracker they can run as one container with SQLite. | Narrower scope: error tracking first, single-node first, no full Sentry API compatibility claim. |
+
+### UI
+
+Faultline's UI is built with Phoenix LiveView instead of a separate SPA. That
+keeps the interface close to the backend code and avoids a second frontend
+application just for the console.
+
+The UI is meant to be practical first:
+
+- Dense issue lists for scanning many errors quickly.
+- Clear issue detail pages with stacktraces, breadcrumbs, tags, request data,
+  user data, release, and environment in one workflow.
+- Project settings, usage, retention, and alert rules kept near the work they
+  affect.
+- Tailwind-based styling with a restrained visual hierarchy and responsive
+  layouts.
+
+The point is not to look flashy. The point is to make the common path short:
+open the issue, understand the failure, decide whether to fix, ignore, or alert
+on it.
+
+### Performance
+
+Faultline does not publish comparative benchmark numbers yet, so this README
+does not claim it is faster than Bugsink or GlitchTip. The performance target is
+more specific: keep the single-node error-tracking path fast enough that small
+teams do not need to operate a larger stack.
+
+The important choices are:
+
+- Phoenix and Bandit handle concurrent HTTP ingestion inside one BEAM
+  application.
+- SQLite keeps the V1.0 storage path local and removes a network hop.
+- Normalized event fields and issue search documents avoid reparsing raw JSON
+  for common UI queries.
+- LiveView avoids shipping and maintaining a large separate frontend app for
+  the console.
+- Retention rules, rate limits, and drop rules are part of the product so noisy
+  projects do not turn into surprise infrastructure work.
+
+The right benchmark for Faultline is not "can it become a Sentry-scale
+cluster?" It is "can a small team run it on modest hardware and still trust it
+during an error spike?"
+
+### Maintenance model
+
+Faultline is optimized for people who will also be the operators:
+
+- No PostgreSQL, Redis, Kafka, ClickHouse, object storage, Celery, or separate
+  worker fleet in the default V1.0 path.
+- One database file to back up.
+- One container to deploy or roll back.
+- Migrations and first-admin bootstrap run at release startup.
+- The core data model is small: projects, DSNs, raw events, normalized events,
+  grouped issues, alert rules, retention rules, and users.
+
+That smaller maintenance surface is the main reason to choose Faultline.
 
 ## Architecture
 

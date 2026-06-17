@@ -9,6 +9,26 @@ Redis、Kafka、ClickHouse 或对象存储的小团队。
 > 当前状态：早期 V1.0。目标是做一个实用的单节点开源版本，不是完整替代
 > Sentry。
 
+## 为什么做 Faultline
+
+很多小团队其实不需要一整套可观测性平台。他们最急的问题通常只有一个：
+“线上哪里炸了，怎么尽快定位和修掉？”
+
+Sentry 很强，但自托管 Sentry 是一个大型分布式系统。GlitchTip 覆盖更广，除了错误追踪，
+还做 performance monitoring、uptime monitoring 和 logs。Bugsink 和 Faultline 更接近，
+都是偏自托管、Sentry SDK 兼容的错误追踪系统，而且 Bugsink 已经是一个很成熟的选择。
+
+Faultline 想做的是更窄、更直接的一件事：让 Sentry 兼容的错误追踪像普通应用一样容易理解、
+容易部署、容易备份、容易维护。开源 V1.0 会坚持单节点、SQLite-first，优先把日常 issue
+分诊工作流做好，而不是把自己扩成另一套大型监控平台。
+
+范围刻意收得很小：
+
+- 上报路径要简单：接收常见 Sentry SDK payload，本地持久化。
+- 运维路径要简单：一个 Phoenix release，一个 SQLite 数据库，一个持久化 `/data` 卷。
+- UI 要直接：快速扫 issue、看清事件详情、能搜索、能做保留策略、能配置告警，不要绕进复杂后台。
+- 代码要好维护：Phoenix contexts、LiveView 页面、Ecto schema，少量清晰的活动部件。
+
 ## 它能做什么
 
 - 接收 Sentry SDK 的事件上报，支持兼容的 store/envelope 接口。
@@ -24,6 +44,56 @@ Redis、Kafka、ClickHouse 或对象存储的小团队。
 - 不是完整可观测性平台。
 - 暂不支持 session replay、profiling、metrics、APM、source maps、minidumps。
 - 开源 V1.0 不以多节点 SaaS 架构为目标。
+
+## 和 Bugsink、GlitchTip 的对比
+
+Faultline 不是要照搬现有 Sentry 替代品的所有功能，而是选择另一组取舍。
+
+| 项目 | 更适合谁 | 取舍 |
+| --- | --- | --- |
+| [Bugsink](https://www.bugsink.com/docs/) | 想要成熟 Python/Django 实现、自托管、Sentry SDK 兼容错误追踪，并看重官方单机性能说明的团队。 | Bugsink 是很强的直接竞品。Faultline 的差异在 Phoenix/LiveView、Elixir 代码栈，以及围绕分诊流程做的紧凑控制台。 |
+| [GlitchTip](https://glitchtip.com/documentation/) | 想要开源错误追踪，同时还要 performance monitoring、uptime monitoring、logs、托管版本和更完整平台能力的团队。 | 功能面更广，也意味着概念、配置和维护面更多。Faultline V1.0 刻意不追这个宽度。 |
+| Faultline | 想要尽量轻、能用一个容器加 SQLite 跑起来的 Sentry 兼容 issue tracker 的小团队。 | 范围更窄：error tracking first、single-node first，不宣称完整兼容 Sentry API。 |
+
+### UI
+
+Faultline 的 UI 使用 Phoenix LiveView，不需要维护单独的 SPA。界面是服务端渲染、实时更新，
+并且离业务代码很近。这里更在意日常排查时顺不顺手，而不是做一个花哨的 dashboard：
+
+- issue 列表密度更高，适合快速扫大量错误。
+- issue 详情页把 stacktrace、breadcrumbs、tags、request、user、release、environment 放在同一个排查流程里。
+- 项目设置、用量、保留策略、告警规则都放在和工作流接近的位置。
+- 使用 Tailwind 做克制、清楚、响应式的界面，不额外引入一套前端应用。
+
+目标很朴素：打开 issue，看懂错误，判断是修复、忽略还是配置告警。这个路径越短越好。
+
+### 性能
+
+Faultline 还没有发布可复现的横向 benchmark，所以这里不会说“比 Bugsink 或 GlitchTip 快几倍”。
+更准确的说法是：Faultline 想把单节点错误追踪路径做得足够快、足够稳，不让小团队为了收错误再维护一套大基础设施。
+
+几个关键取舍：
+
+- Phoenix 和 Bandit 在一个 BEAM 应用里处理并发 HTTP ingest。
+- SQLite 让 V1.0 默认存储在本机完成，少一次数据库网络跳转。
+- 标准化事件字段和 issue search document 让常见 UI 查询不需要反复解析 raw JSON。
+- LiveView 避免为控制台维护一个大型独立前端应用。
+- 保留策略、限流和 drop rules 是产品的一部分，避免 noisy project 变成突发运维成本。
+
+Faultline 关心的 benchmark 不是“能不能扩成 Sentry 级别集群”，而是“一个小团队能不能在普通机器上跑，
+并且在错误峰值时仍然信得过它”。
+
+### 维护
+
+Faultline 默认面向自己部署、自己维护的人：
+
+- V1.0 默认路径不需要 PostgreSQL、Redis、Kafka、ClickHouse、对象存储、Celery 或单独 worker 集群。
+- 一个数据库文件就能备份。
+- 一个容器就能部署或回滚。
+- release 启动时执行迁移，并支持初始化第一个管理员。
+- 核心数据模型很小：projects、DSNs、raw events、normalized events、grouped issues、alert rules、retention rules、users。
+
+维护面小，就是选择 Faultline 的主要理由。
 
 ## 架构
 
