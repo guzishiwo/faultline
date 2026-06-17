@@ -33,7 +33,7 @@ defmodule FaultlineWeb.ProjectLive.New do
   end
 
   def handle_event("save", %{"project" => project_params}, socket) do
-    case Projects.create_project(project_params, dsn_base_url: FaultlineWeb.Endpoint.url()) do
+    case Projects.create_project(project_params) do
       {:ok, project} ->
         {:noreply,
          socket

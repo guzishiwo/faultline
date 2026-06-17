@@ -36,8 +36,15 @@ Sentry SDK
 The intended deployment model is:
 
 ```sh
-docker run -p 4010:4010 -v faultline-data:/data faultline
+docker run -p 4010:4010 -v faultline-data:/data \
+  -e PHX_HOST=errors.example.com \
+  faultline
 ```
+
+`PHX_HOST` should be the public HTTPS host that SDKs can reach. It becomes the
+default host for generated project DSNs. Admins can change the public DSN base
+URL later from `/admin/settings` and regenerate existing project DSNs after a
+domain change.
 
 PostgreSQL may become an optional path later for larger deployments or a hosted SaaS edition, but it should not complicate the default open-source experience.
 

@@ -89,6 +89,77 @@ Notes:
 - The Docker entrypoint generates and persists `SECRET_KEY_BASE` in `/data` if
   you do not provide one as a Fly secret.
 
+## Public DSN Host
+
+Fly gives every app a default hostname:
+
+```text
+<app-name>.fly.dev
+```
+
+Use that hostname as `PHX_HOST` before creating projects if you are starting
+with the generated Fly domain:
+
+```toml
+[env]
+  PHX_HOST = "faultline-demo.fly.dev"
+```
+
+Faultline uses `PHX_HOST` as the default public DSN base URL. Generated project
+DSNs will look like:
+
+```text
+https://<public-key>:<secret-key>@faultline-demo.fly.dev/<project-number>
+```
+
+After the first deploy, admins can inspect or override the public DSN base URL
+inside Faultline:
+
+```text
+/admin/settings
+```
+
+Use that page when the final hostname is only known after deployment. New
+projects use the saved public DSN base URL. Existing projects keep their stored
+DSNs until an admin clicks **Regenerate project DSNs**.
+
+## Custom Domain
+
+For a custom ingest domain such as `errors.example.com`:
+
+```sh
+fly certs add errors.example.com --app "$APP"
+```
+
+Fly shows the DNS records required for that hostname. Configure those records
+with your DNS provider, then check certificate status:
+
+```sh
+fly certs check errors.example.com --app "$APP"
+```
+
+Once the certificate is issued and the hostname reaches your app, update the
+default host for future deploys:
+
+```toml
+[env]
+  PHX_HOST = "errors.example.com"
+```
+
+Then deploy again:
+
+```sh
+fly deploy --app "$APP"
+```
+
+If projects already exist, log in as an admin, open `/admin/settings`, set:
+
+```text
+https://errors.example.com
+```
+
+and click **Regenerate project DSNs**.
+
 ## Optional Admin Credentials
 
 If you do nothing, the first deployment creates:

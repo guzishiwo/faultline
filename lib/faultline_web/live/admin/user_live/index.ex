@@ -50,11 +50,20 @@ defmodule FaultlineWeb.Admin.UserLive.Index do
             </p>
           </div>
 
-          <div class="rounded-lg border border-base-300 bg-base-200/70 p-4">
-            <p class="text-xs font-semibold uppercase tracking-[0.14em] text-base-content/50">
-              Admin users
-            </p>
-            <p id="admin-count" class="mt-2 text-3xl font-semibold">{@admin_count}</p>
+          <div class="space-y-3">
+            <.link
+              id="admin-settings-link"
+              navigate={~p"/admin/settings"}
+              class="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-base-300 px-4 py-2.5 text-sm font-semibold text-base-content/70 transition hover:-translate-y-0.5 hover:bg-base-200 hover:text-base-content"
+            >
+              <.icon name="hero-cog-6-tooth" class="size-4" /> Instance settings
+            </.link>
+            <div class="rounded-lg border border-base-300 bg-base-200/70 p-4">
+              <p class="text-xs font-semibold uppercase tracking-[0.14em] text-base-content/50">
+                Admin users
+              </p>
+              <p id="admin-count" class="mt-2 text-3xl font-semibold">{@admin_count}</p>
+            </div>
           </div>
         </section>
 

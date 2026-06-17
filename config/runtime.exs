@@ -65,6 +65,8 @@ if config_env() == :prod do
     ],
     secret_key_base: secret_key_base
 
+  config :faultline, Faultline.Projects, dsn_base_url: "https://#{host}"
+
   # ## SSL Support
   #
   # To get SSL working, you will need to add the `https` key

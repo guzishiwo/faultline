@@ -8,12 +8,11 @@ defmodule Faultline.Projects do
   alias Ecto.Multi
   alias Faultline.Events.Event
   alias Faultline.Ingest.RawEvent
+  alias Faultline.InstanceSettings
   alias Faultline.Issues.Issue
   alias Faultline.Projects.DSN
   alias Faultline.Projects.Project
   alias Faultline.Repo
-
-  @default_dsn_base_url "http://localhost:4010"
 
   @doc """
   Lists projects ordered by newest first.
@@ -38,7 +37,7 @@ defmodule Faultline.Projects do
   Creates a project and stores its Sentry-compatible DSN.
   """
   def create_project(attrs, opts \\ []) do
-    dsn_base_url = Keyword.get(opts, :dsn_base_url, configured_dsn_base_url())
+    dsn_base_url = Keyword.get(opts, :dsn_base_url, InstanceSettings.public_dsn_base_url())
 
     Multi.new()
     |> Multi.run(:project_number, fn repo, _changes ->
@@ -88,6 +87,33 @@ defmodule Faultline.Projects do
     |> project_usage()
   end
 
+  def regenerate_project_dsn(
+        %Project{} = project,
+        base_url \\ InstanceSettings.public_dsn_base_url()
+      ) do
+    project
+    |> Project.update_dsn_changeset(DSN.build(project, base_url))
+    |> Repo.update()
+  end
+
+  def regenerate_all_project_dsns(base_url \\ InstanceSettings.public_dsn_base_url()) do
+    projects = list_projects()
+
+    projects
+    |> Enum.reduce(Multi.new(), fn project, multi ->
+      Multi.update(
+        multi,
+        {:project_dsn, project.id},
+        Project.update_dsn_changeset(project, DSN.build(project, base_url))
+      )
+    end)
+    |> Repo.transaction()
+    |> case do
+      {:ok, changes} -> {:ok, map_size(changes)}
+      {:error, _operation, changeset, _changes} -> {:error, changeset}
+    end
+  end
+
   defp project_usage(%Project{} = project) do
     %{
       project: project,
@@ -119,11 +145,5 @@ defmodule Faultline.Projects do
       nil -> 1
       project_number -> project_number + 1
     end
-  end
-
-  defp configured_dsn_base_url do
-    :faultline
-    |> Application.get_env(__MODULE__, [])
-    |> Keyword.get(:dsn_base_url, @default_dsn_base_url)
   end
 end

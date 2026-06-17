@@ -31,6 +31,7 @@ defmodule FaultlineWeb.ProjectLive.SettingsComponents do
   end
 
   attr :project, :map, required: true
+  attr :current_scope, :map, default: nil
 
   def sdk_tab(assigns) do
     ~H"""
@@ -68,6 +69,29 @@ defmodule FaultlineWeb.ProjectLive.SettingsComponents do
           </div>
         </div>
       </section>
+
+      <aside
+        id="project-sdk-domain-card"
+        class="h-fit space-y-4 rounded-lg border border-base-300 bg-base-200/70 p-5 text-sm leading-6 text-base-content/70"
+      >
+        <div>
+          <p class="font-semibold text-base-content">Public ingest origin</p>
+          <p id="project-sdk-dsn-origin" class="mt-2 break-all font-mono text-xs">
+            {dsn_origin(@project.dsn)}
+          </p>
+        </div>
+        <p>
+          This origin is embedded in the project DSN. Configure it before creating production projects, or regenerate project DSNs after changing domains.
+        </p>
+        <.link
+          :if={admin_scope?(@current_scope)}
+          id="project-sdk-admin-settings-link"
+          navigate={~p"/admin/settings"}
+          class="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-base-300 bg-base-100 px-4 py-2.5 text-sm font-semibold text-base-content/70 transition hover:bg-base-200 hover:text-base-content"
+        >
+          <.icon name="hero-cog-6-tooth" class="size-4" /> Instance settings
+        </.link>
+      </aside>
     </section>
     """
   end
@@ -741,4 +765,20 @@ defmodule FaultlineWeb.ProjectLive.SettingsComponents do
   defp channel_label("webhook"), do: "Webhook"
   defp channel_label("slack"), do: "Slack webhook"
   defp channel_label(value), do: value
+
+  defp dsn_origin(dsn) do
+    uri = URI.parse(dsn)
+    port = dsn_origin_port(uri.scheme, uri.port)
+    authority = if port, do: "#{uri.host}:#{port}", else: uri.host
+
+    "#{uri.scheme}://#{authority}"
+  end
+
+  defp dsn_origin_port("http", 80), do: nil
+  defp dsn_origin_port("https", 443), do: nil
+  defp dsn_origin_port(_scheme, nil), do: nil
+  defp dsn_origin_port(_scheme, port), do: port
+
+  defp admin_scope?(%{user: %{role: "admin"}}), do: true
+  defp admin_scope?(_scope), do: false
 end

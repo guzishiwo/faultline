@@ -50,6 +50,7 @@ defmodule FaultlineWeb.Router do
     live_session :admin,
       on_mount: [{FaultlineWeb.UserAuth, :require_admin}] do
       live "/users", UserLive.Index, :index
+      live "/settings", SettingsLive, :edit
     end
   end
 

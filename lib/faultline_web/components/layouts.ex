@@ -64,7 +64,7 @@ defmodule FaultlineWeb.Layouts do
             </.link>
             <.link
               :if={@current_scope.user.role == "admin"}
-              navigate={~p"/admin/users"}
+              navigate={~p"/admin/settings"}
               class="rounded-full px-3 py-1.5 text-sm font-semibold leading-none transition hover:bg-base-100 hover:shadow-sm"
             >
               Admin
@@ -254,7 +254,7 @@ defmodule FaultlineWeb.Layouts do
           </.link>
           <.link
             :if={@current_scope.user.role == "admin"}
-            navigate={~p"/admin/users"}
+            navigate={~p"/admin/settings"}
             class="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-semibold transition hover:bg-base-200"
           >
             <.icon name="hero-shield-check" class="size-4 text-base-content/60" /> Admin

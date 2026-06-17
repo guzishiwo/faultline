@@ -278,7 +278,7 @@ defmodule FaultlineWeb.ProjectLive.Settings do
 
         <.settings_tabs project={@project} settings_tabs={@settings_tabs} active_tab={@active_tab} />
 
-        <.sdk_tab :if={@active_tab == "sdk"} project={@project} />
+        <.sdk_tab :if={@active_tab == "sdk"} project={@project} current_scope={@current_scope} />
 
         <.ingest_tab
           :if={@active_tab == "ingest"}

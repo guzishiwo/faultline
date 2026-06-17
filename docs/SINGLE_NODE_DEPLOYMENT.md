@@ -16,7 +16,9 @@ BEAM cannot cover.
 The default open-source deployment should be one command:
 
 ```sh
-docker run -p 4010:4010 -v faultline-data:/data faultline
+docker run -p 4010:4010 -v faultline-data:/data \
+  -e PHX_HOST=errors.example.com \
+  faultline
 ```
 
 The container stores its database at:
@@ -59,6 +61,31 @@ DATABASE_PATH=/data/faultline.db
 `SECRET_KEY_BASE` is optional for the Docker image because the entrypoint can
 persist one under `/data`. For hand-built releases outside Docker, provide a
 stable `SECRET_KEY_BASE`.
+
+## Public DSN URL
+
+`PHX_HOST` is the default public host used in generated Sentry-compatible DSNs.
+Set it to the HTTPS hostname that application SDKs can reach:
+
+```sh
+docker run -p 127.0.0.1:4010:4010 -v faultline-data:/data \
+  -e PHX_HOST=errors.example.com \
+  faultline
+```
+
+In this shape, terminate TLS in a reverse proxy such as Caddy, Nginx, Traefik,
+or a load balancer, and forward traffic to `http://127.0.0.1:4010`.
+
+After login, admins can also update the public DSN base URL from:
+
+```text
+/admin/settings
+```
+
+Use that page when a host is assigned after first boot, such as a managed
+platform hostname. New projects use the saved public DSN base URL. Existing
+projects keep their stored DSNs until an admin clicks **Regenerate project
+DSNs** on the same page.
 
 ## Cost controls
 

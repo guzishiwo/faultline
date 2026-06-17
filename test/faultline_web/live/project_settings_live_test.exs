@@ -194,6 +194,8 @@ defmodule FaultlineWeb.ProjectSettingsLiveTest do
     assert has_element?(view, "#project-sdk-tab")
     assert has_element?(view, "#settings-tab-sdk[aria-current='page']")
     assert has_element?(view, "#project-sdk-settings")
+    assert has_element?(view, "#project-sdk-domain-card")
+    assert has_element?(view, "#project-sdk-dsn-origin", "https://errors.example.com")
     assert has_element?(view, "#project-dsn", project.dsn)
 
     assert has_element?(
