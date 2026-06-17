@@ -38,10 +38,13 @@ defmodule FaultlineWeb.Layouts do
     <header class="sticky top-0 z-30 border-b border-base-300 bg-base-100/95 backdrop-blur">
       <div class="px-4 sm:px-6 lg:px-8">
         <div class="mx-auto flex h-14 max-w-7xl items-center gap-3">
-          <a id="app-home-link" href="/" class="flex min-w-0 items-center gap-2.5">
-            <span class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-base-content text-xs font-bold text-base-100 shadow-sm">
-              F
-            </span>
+          <a id="app-home-link" href="/" class="group flex min-w-0 items-center gap-2.5">
+            <img
+              id="app-logo"
+              src={~p"/images/logo.svg"}
+              alt=""
+              class="size-8 shrink-0 rounded-lg shadow-sm transition group-hover:shadow-md"
+            />
             <span class="truncate text-sm font-semibold tracking-normal">Faultline</span>
           </a>
 
