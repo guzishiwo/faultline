@@ -28,6 +28,26 @@ The container stores its database at:
 If `SECRET_KEY_BASE` is not provided, the entrypoint generates one and stores it
 in `/data/secret_key_base` so sessions survive restarts with the same volume.
 
+On first boot, if no users exist, the entrypoint also creates a bootstrap admin:
+
+```text
+Email: admin@faultline.local
+Password file: /data/bootstrap_admin_password
+```
+
+To choose the first admin credentials yourself:
+
+```sh
+docker run -p 4010:4010 -v faultline-data:/data \
+  -e PHX_HOST=errors.example.com \
+  -e FAULTLINE_ADMIN_EMAIL=admin@example.com \
+  -e FAULTLINE_ADMIN_PASSWORD=change-me-now \
+  faultline
+```
+
+Admin bootstrap only runs while the `users` table is empty. Existing users are
+never overwritten.
+
 ## Required environment
 
 ```sh
@@ -52,6 +72,9 @@ These defaults are intentionally small. Raise them only after observing saturati
 | `DB_QUEUE_INTERVAL_MS` | `1000` | Ecto queue interval for adapting checkout pressure. |
 | `MAX_ENVELOPE_BYTES` | `1000000` | Maximum Sentry envelope request body accepted by ingest. |
 | `RETENTION_CLEANUP_INTERVAL_MS` | `3600000` | Local retention cleanup interval. |
+| `FAULTLINE_ADMIN_EMAIL` | `admin@faultline.local` | Optional first admin email when the database has no users. |
+| `FAULTLINE_ADMIN_PASSWORD` | generated | Optional first admin password; must be at least 12 characters. |
+| `FAULTLINE_ADMIN_PASSWORD_FILE` | `/data/bootstrap_admin_password` | Where the generated first admin password is stored. |
 | `DNS_CLUSTER_QUERY` | unset | Leave unset for single-node deployments. |
 
 ## Operational shape

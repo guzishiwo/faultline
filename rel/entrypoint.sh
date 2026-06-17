@@ -13,5 +13,6 @@ if [ -z "${SECRET_KEY_BASE:-}" ]; then
 fi
 
 /app/bin/faultline eval 'Faultline.Release.migrate()'
+/app/bin/faultline eval 'Faultline.Release.bootstrap_admin_from_env()'
 
 exec /app/bin/faultline start

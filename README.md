@@ -197,6 +197,9 @@ mix precommit
 See [docs/SINGLE_NODE_DEPLOYMENT.md](docs/SINGLE_NODE_DEPLOYMENT.md) for the default
 single-node deployment shape and runtime cost controls.
 
+For a Fly.io trial deployment, see
+[docs/FLY_IO_DEPLOYMENT.md](docs/FLY_IO_DEPLOYMENT.md).
+
 ## Product Principles
 
 - Error tracking first, observability later.

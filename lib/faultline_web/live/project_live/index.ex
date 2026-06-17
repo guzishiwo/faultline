@@ -17,22 +17,27 @@ defmodule FaultlineWeb.ProjectLive.Index do
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
-      <div class="w-full space-y-8">
-        <section class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-end">
-          <div class="space-y-4">
+      <div class="mx-auto w-full max-w-7xl space-y-6">
+        <section class="flex flex-col gap-4 border-b border-base-300 pb-5 lg:flex-row lg:items-end lg:justify-between">
+          <div class="min-w-0">
             <p class="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
-              Faultline Projects
+              Project registry
             </p>
-            <div class="space-y-3">
-              <h1 class="text-4xl font-semibold tracking-normal text-base-content sm:text-5xl">
-                Route SDK errors into projects.
-              </h1>
-              <p class="max-w-2xl text-base leading-7 text-base-content/70">
-                Open triage queues quickly and keep project configuration one step away.
-              </p>
-            </div>
+            <h1 class="mt-2 text-3xl font-semibold tracking-normal text-base-content">
+              Projects
+            </h1>
+            <p class="mt-2 max-w-2xl text-sm leading-6 text-base-content/60">
+              Jump into triage, review intake limits, or open project settings for a service.
+            </p>
           </div>
-          <div class="flex lg:justify-end">
+          <div class="flex flex-wrap items-center gap-3 lg:justify-end">
+            <div
+              id="project-count-summary"
+              class="rounded-lg border border-base-300 bg-base-100 px-4 py-2 text-sm text-base-content/55 shadow-sm"
+            >
+              <span class="font-semibold text-base-content">{@project_count}</span>
+              {if @project_count == 1, do: "project", else: "projects"}
+            </div>
             <.link
               id="new-project-link"
               navigate={~p"/projects/new"}
@@ -44,12 +49,15 @@ defmodule FaultlineWeb.ProjectLive.Index do
         </section>
 
         <section class="overflow-hidden rounded-lg border border-base-300 bg-base-100 shadow-sm">
-          <div class="flex flex-col gap-1 border-b border-base-300 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-            <h2 class="text-sm font-semibold uppercase tracking-[0.14em] text-base-content/60">
-              Project registry
+          <div class="grid gap-3 border-b border-base-300 bg-base-200/40 px-5 py-4 md:grid-cols-[minmax(0,1fr)_14rem_18rem]">
+            <h2 class="text-xs font-semibold uppercase tracking-[0.14em] text-base-content/45">
+              Service
             </h2>
-            <p class="text-sm text-base-content/45">
-              {@project_count} {if @project_count == 1, do: "project", else: "projects"}
+            <p class="hidden text-xs font-semibold uppercase tracking-[0.14em] text-base-content/45 md:block">
+              Ingest policy
+            </p>
+            <p class="hidden text-right text-xs font-semibold uppercase tracking-[0.14em] text-base-content/45 md:block">
+              Actions
             </p>
           </div>
 
@@ -71,7 +79,7 @@ defmodule FaultlineWeb.ProjectLive.Index do
             <article
               :for={{id, project} <- @streams.projects}
               id={id}
-              class="grid gap-4 px-5 py-4 transition hover:bg-base-200/60 lg:grid-cols-[minmax(0,1fr)_24rem] lg:items-center"
+              class="grid gap-4 px-5 py-4 transition hover:bg-base-200/55 md:grid-cols-[minmax(0,1fr)_14rem] xl:grid-cols-[minmax(0,1fr)_14rem_18rem] xl:items-center"
             >
               <div class="flex min-w-0 items-center gap-4">
                 <div
@@ -106,40 +114,51 @@ defmodule FaultlineWeb.ProjectLive.Index do
                     >
                       {Projects.project_platform_label(project.platform)}
                     </span>
-                    <span class="rounded bg-base-200 px-2 py-1">
-                      <span class="font-semibold text-base-content">
-                        {project.rate_limit_max_events}
-                      </span>
-                      / {project.rate_limit_window_seconds}s
-                    </span>
                     <span class="font-mono text-xs text-base-content/40">{project.slug}</span>
                   </div>
                 </div>
               </div>
 
-              <div class="grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto_auto] lg:justify-end">
+              <div
+                id={"project-ingest-policy-#{project.id}"}
+                class="grid grid-cols-2 gap-2 rounded-lg border border-base-300 bg-base-200/45 px-3 py-2 text-sm md:grid-cols-1"
+              >
+                <div>
+                  <p class="text-xs font-semibold uppercase tracking-[0.12em] text-base-content/40">
+                    Limit
+                  </p>
+                  <p class="mt-0.5 font-semibold text-base-content">
+                    {project.rate_limit_max_events}
+                    <span class="font-normal text-base-content/45">
+                      / {project.rate_limit_window_seconds}s
+                    </span>
+                  </p>
+                </div>
+                <div class="md:hidden">
+                  <p class="text-xs font-semibold uppercase tracking-[0.12em] text-base-content/40">
+                    Platform
+                  </p>
+                  <p class="mt-0.5 font-semibold text-base-content">
+                    {Projects.project_platform_label(project.platform)}
+                  </p>
+                </div>
+              </div>
+
+              <div class="grid gap-2 sm:grid-cols-2 md:col-span-2 xl:col-span-1 xl:flex xl:justify-end">
                 <.link
                   id={"project-issues-link-#{project.id}"}
                   navigate={~p"/issues?project=#{project.id}"}
-                  class="inline-flex items-center justify-center gap-2 rounded-lg bg-base-content px-4 py-2.5 text-sm font-semibold text-base-100 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                  class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-base-content px-4 py-2.5 text-sm font-semibold text-base-100 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md xl:shrink-0"
                 >
                   Open triage <.icon name="hero-arrow-right" class="size-4" />
                 </.link>
                 <.link
-                  id={"project-setup-link-#{project.id}"}
-                  navigate={~p"/p/#{project.slug}/platform/getting-started"}
-                  class="inline-flex items-center justify-center gap-2 rounded-lg border border-base-300 px-3 py-2.5 text-sm font-semibold text-base-content/70 transition hover:bg-base-200 hover:text-base-content"
-                >
-                  <.icon name="hero-code-bracket-square" class="size-4" />
-                  <span class="sm:sr-only lg:not-sr-only">Setup</span>
-                </.link>
-                <.link
                   id={"project-settings-link-#{project.id}"}
                   navigate={~p"/p/#{project.slug}/settings"}
-                  class="inline-flex items-center justify-center gap-2 rounded-lg border border-base-300 px-3 py-2.5 text-sm font-semibold text-base-content/70 transition hover:bg-base-200 hover:text-base-content"
+                  class="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-base-300 px-3 py-2.5 text-sm font-semibold text-base-content/70 transition hover:bg-base-200 hover:text-base-content xl:shrink-0"
                 >
                   <.icon name="hero-cog-6-tooth" class="size-4" />
-                  <span class="sm:sr-only lg:not-sr-only">Settings</span>
+                  <span class="sm:sr-only xl:not-sr-only">Settings</span>
                 </.link>
               </div>
             </article>

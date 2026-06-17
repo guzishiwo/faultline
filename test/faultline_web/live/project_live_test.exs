@@ -34,8 +34,15 @@ defmodule FaultlineWeb.ProjectLiveTest do
     assert has_element?(view, "#project-platform-#{project.id}", "React")
     assert has_element?(view, "#project-open-link-#{project.id}", "React Storefront")
     assert has_element?(view, "#project-issues-link-#{project.id}", "Open triage")
-    assert has_element?(view, "#project-setup-link-#{project.id}")
-    assert has_element?(view, "#project-settings-link-#{project.id}")
+
+    refute has_element?(view, "#project-sdk-setup-link-#{project.id}")
+
+    assert has_element?(
+             view,
+             "#project-settings-link-#{project.id}[href='/p/#{project.slug}/settings']",
+             "Settings"
+           )
+
     refute has_element?(view, "#projects-#{project.id} code")
   end
 
