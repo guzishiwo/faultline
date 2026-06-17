@@ -1,7 +1,7 @@
 FROM elixir:1.18.4-otp-27-slim AS build
 
 RUN apt-get update -y && apt-get install -y --no-install-recommends \
-  build-essential ca-certificates git \
+  build-essential ca-certificates git nodejs npm \
   && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -16,6 +16,9 @@ RUN mkdir config
 
 COPY config/config.exs config/prod.exs config/runtime.exs config/
 RUN mix deps.compile
+
+COPY assets/package*.json assets/
+RUN npm ci --prefix assets --omit=dev
 
 COPY priv priv
 COPY lib lib
