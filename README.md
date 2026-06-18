@@ -16,8 +16,7 @@ one urgent question: "what broke in production, and how do we fix it?"
 
 Sentry is powerful, but self-hosting it is intentionally a large distributed
 system. GlitchTip is broader and covers error tracking, performance monitoring,
-uptime monitoring, and logs. Bugsink is closer to Faultline's self-hosted error
-tracking focus and is already a strong option.
+uptime monitoring, and logs.
 
 Faultline exists for a narrower reason: make Sentry-compatible error tracking
 feel like a normal application you can understand, run, back up, and maintain
@@ -53,16 +52,39 @@ The scope is intentionally small:
 - No session replay, profiling, metrics, APM, source maps, or minidumps yet.
 - Not intended for multi-node SaaS operation in the open-source V1.0 line.
 
-## Compared with Bugsink and GlitchTip
+## Compared with GlitchTip and Sentry
 
 Faultline is not trying to copy every feature from existing Sentry alternatives.
 It is making a different set of trade-offs.
 
 | Project | Best fit | Trade-off |
 | --- | --- | --- |
-| [Bugsink](https://www.bugsink.com/docs/) | Self-hosted Sentry SDK compatible error tracking with a mature Python/Django implementation and documented single-server performance work. | A strong direct alternative. Faultline's difference is Phoenix/LiveView, an Elixir codebase, and a compact console built around the triage workflow. |
 | [GlitchTip](https://glitchtip.com/documentation/) | Teams that want open-source error tracking plus performance monitoring, uptime monitoring, logs, hosted plans, and broader platform features. | More product surface area also means more concepts to configure and maintain. Faultline intentionally avoids that breadth in V1.0. |
+| [Sentry](https://sentry.io/) | Teams that want the most mature hosted observability product, broad SDK support, tracing, replay, profiling, integrations, and enterprise controls. | Strongest product surface, but hosted pricing scales with usage and self-hosting is a large distributed system. |
 | Faultline | Small teams that want the lightest practical Sentry-compatible issue tracker they can run as one container with SQLite. | Narrower scope: error tracking first, single-node first, no full Sentry API compatibility claim. |
+
+### Price at 200k errors per month
+
+The table below is a rough monthly comparison for 200,000 error events per
+month, using public pricing checked in June 2026. It only compares error/event
+volume. It does not include taxes, backups, storage growth, on-call time,
+traces, replays, logs, attachments, uptime checks, or paid support.
+
+| Option | Estimated monthly cost | What the price means |
+| --- | ---: | --- |
+| Faultline self-hosted | ~$5-$20 infrastructure | One container plus a persistent SQLite volume. No per-event software fee. |
+| [GlitchTip hosted](https://glitchtip.com/pricing/) | $50 | The 500k events/month Medium tier covers 200k events. |
+| [Sentry Team](https://sentry.io/pricing/) | ~$58-$66 | Team includes 50k errors/month; the remaining 150k errors are billed by Sentry's published errors pricing. |
+
+At this volume, the practical difference is not raw ingestion cost alone.
+Sentry buys the most mature hosted product surface. GlitchTip buys a broader
+hosted open-source-style platform. Faultline is the smallest operational shape:
+one Phoenix app, one SQLite database, and a narrower error-tracking feature set.
+
+Faultline's cost model is intentionally flat: there is no per-project billing
+and no per-event software fee. Add as many projects as your machine can handle.
+As event volume grows, the unit cost trends down because the bill is mostly the
+server, disk, backups, and the time you spend operating them.
 
 ### UI
 
@@ -86,10 +108,17 @@ on it.
 
 ### Performance
 
-Faultline does not publish comparative benchmark numbers yet, so this README
-does not claim it is faster than Bugsink or GlitchTip. The performance target is
-more specific: keep the single-node error-tracking path fast enough that small
-teams do not need to operate a larger stack.
+Faultline is built for the boring middle: the error volume that is expensive on
+usage-priced SaaS, but not actually hard for one well-sized machine. Five
+million error events per month is less than two events per second on average.
+That should be easy for this architecture.
+
+The hard parts are not monthly totals. They are bursts, payload size, retention,
+search, and backups. A broken deploy can send a month of normal traffic in a few
+minutes. Large stacktraces, breadcrumbs, request data, and tags can turn a small
+event count into a large SQLite file. Keeping millions of events is reasonable;
+keeping them searchable, backed up, and cheap during incident spikes is the real
+engineering problem.
 
 The important choices are:
 
@@ -103,9 +132,9 @@ The important choices are:
 - Retention rules, rate limits, and drop rules are part of the product so noisy
   projects do not turn into surprise infrastructure work.
 
-The right benchmark for Faultline is not "can it become a Sentry-scale
-cluster?" It is "can a small team run it on modest hardware and still trust it
-during an error spike?"
+The right benchmark for Faultline is therefore practical: can a small team keep
+all the errors they care about, on one modest server, without turning every
+traffic spike into a bill spike or an operations incident?
 
 ### Maintenance model
 
