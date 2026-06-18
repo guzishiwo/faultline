@@ -2,6 +2,8 @@
 
 [中文说明](docs/README.zh-CN.md)
 
+![Faultline self-hosted error tracker](docs/images/faultline-cover.png)
+
 Faultline is a small self-hosted error tracker built with Phoenix, LiveView, and
 SQLite. It is designed for teams that want Sentry-compatible error ingestion
 without running PostgreSQL, Redis, Kafka, ClickHouse, or object storage.
@@ -195,7 +197,7 @@ iex -S mix phx.server
 Run the published container with a persistent SQLite volume:
 
 ```sh
-docker run --pull always -d --name faultline --restart unless-stopped -p 4010:4010 -v faultline-data:/data -e PHX_HOST=localhost ghcr.io/guzishiwo/faultline:latest
+docker run --pull always -d --name faultline --restart unless-stopped -p 4010:4010 -v faultline-data:/data -e PHX_HOST=localhost ghcr.io/guzishiwo/faultline:v0.1.0
 ```
 
 Then open:

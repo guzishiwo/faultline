@@ -2,6 +2,8 @@
 
 [English README](../README.md)
 
+![Faultline 自托管错误追踪](images/faultline-cover.png)
+
 Faultline 是一个轻量级自托管错误追踪系统，基于 Phoenix、LiveView 和
 SQLite 构建。它适合想复用 Sentry SDK 上报能力，但不想维护 PostgreSQL、
 Redis、Kafka、ClickHouse 或对象存储的小团队。
@@ -159,20 +161,50 @@ iex -S mix phx.server
 
 ## Docker 部署
 
-构建并运行单节点容器：
+使用发布镜像和持久化 SQLite 卷运行：
+
+```sh
+docker run --pull always -d --name faultline --restart unless-stopped -p 4010:4010 -v faultline-data:/data -e PHX_HOST=localhost ghcr.io/guzishiwo/faultline:v0.1.0
+```
+
+打开：
+
+```text
+http://localhost:4010
+```
+
+默认第一个管理员邮箱：
+
+```text
+admin@faultline.local
+```
+
+查看自动生成的第一个管理员密码：
+
+```sh
+docker exec faultline cat /data/bootstrap_admin_password
+```
+
+Docker 命名卷 `faultline-data` 会保存 SQLite 数据库和自动生成的 Phoenix secret：
+
+```text
+/data/faultline.db
+/data/secret_key_base
+```
+
+构建并运行本地镜像：
 
 ```sh
 docker build -t faultline .
 
 docker run -p 4010:4010 \
   -v faultline-data:/data \
-  -e PHX_HOST=errors.example.com \
-  -e SECRET_KEY_BASE="$(mix phx.gen.secret)" \
+  -e PHX_HOST=localhost \
   faultline
 ```
 
 `PHX_HOST` 应该填写浏览器和 SDK 能访问到的公网 HTTPS 域名。这里只填 host，不要带
-`https://`。
+`https://`。本地 Docker 运行使用 `localhost`，生产环境使用真实域名。
 
 正确：
 
@@ -192,7 +224,8 @@ PHX_HOST=https://errors.example.com
 /data/faultline.db
 ```
 
-部署时一定要把 `/data` 挂到持久化存储。
+部署时一定要把 `/data` 挂到持久化存储。如果没有设置 `SECRET_KEY_BASE`，容器会自动生成一个，
+并保存到 `/data/secret_key_base`，所以只要保留这个卷，重启后 cookie 仍然有效。
 
 ## Railway 部署
 
