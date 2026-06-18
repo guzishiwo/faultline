@@ -8,6 +8,8 @@ Redis、Kafka、ClickHouse 或对象存储的小团队。
 
 > 当前状态：早期 V1.0。目标是做一个实用的单节点开源版本，不是完整替代
 > Sentry。
+>
+> 许可证：GNU AGPL v3.0 only。
 
 ## 为什么做 Faultline
 
@@ -254,6 +256,11 @@ Faultline 优先支持 SDK 事件上报：
 POST /api/:project_id/envelope/
 POST /api/:project_id/store/
 ```
+
+## 许可证
+
+Faultline 使用 GNU Affero General Public License v3.0 only（`AGPL-3.0-only`）。
+如果你修改了 Faultline，并通过网络让用户使用这个修改版服务，AGPL 要求你向这些用户提供对应的修改版源码。
 
 当前重点支持：
 

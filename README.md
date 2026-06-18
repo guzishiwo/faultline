@@ -8,6 +8,8 @@ without running PostgreSQL, Redis, Kafka, ClickHouse, or object storage.
 
 > Status: early V1.0 work. The goal is a practical single-node open-source
 > edition, not a full Sentry replacement.
+>
+> License: GNU AGPL v3.0 only.
 
 ## Why Faultline exists
 
@@ -329,6 +331,13 @@ Faultline targets SDK event ingestion first:
 POST /api/:project_id/envelope/
 POST /api/:project_id/store/
 ```
+
+## License
+
+Faultline is licensed under the GNU Affero General Public License v3.0 only
+(`AGPL-3.0-only`). If you modify Faultline and let users interact with it over a
+network, the AGPL requires you to offer those users the corresponding source
+code for your modified version.
 
 Supported payload areas:
 
