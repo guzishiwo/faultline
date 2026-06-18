@@ -173,6 +173,18 @@ Then open:
 http://localhost:4010
 ```
 
+Sign in with the default first-admin email:
+
+```text
+admin@faultline.local
+```
+
+Read the generated first-admin password from the container:
+
+```sh
+docker exec faultline cat /data/bootstrap_admin_password
+```
+
 The named Docker volume `faultline-data` stores both the SQLite database and the
 generated Phoenix secret:
 
@@ -272,6 +284,12 @@ If no password is supplied, Faultline writes a generated password to:
 
 ```text
 /data/bootstrap_admin_password
+```
+
+For the Docker quick start above, read it with:
+
+```sh
+docker exec faultline cat /data/bootstrap_admin_password
 ```
 
 ## Sentry SDK Endpoints
