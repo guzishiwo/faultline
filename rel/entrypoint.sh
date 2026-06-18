@@ -1,15 +1,25 @@
 #!/bin/sh
 set -eu
 
-mkdir -p /data
+data_dir="${FAULTLINE_VOLUME_MOUNT_PATH:-/data}"
+
+if [ -z "${DATABASE_PATH:-}" ]; then
+  export DATABASE_PATH="${data_dir%/}/faultline.db"
+fi
+
+database_dir="$(dirname "$DATABASE_PATH")"
+mkdir -p "$database_dir"
 
 if [ -z "${SECRET_KEY_BASE:-}" ]; then
-  if [ ! -f /data/secret_key_base ]; then
-    /app/bin/faultline eval 'IO.puts(Base.encode64(:crypto.strong_rand_bytes(64)))' > /data/secret_key_base
-    chmod 600 /data/secret_key_base
+  secret_key_base_path="${data_dir%/}/secret_key_base"
+  mkdir -p "$(dirname "$secret_key_base_path")"
+
+  if [ ! -f "$secret_key_base_path" ]; then
+    openssl rand -base64 64 > "$secret_key_base_path"
+    chmod 600 "$secret_key_base_path"
   fi
 
-  export SECRET_KEY_BASE="$(cat /data/secret_key_base)"
+  export SECRET_KEY_BASE="$(cat "$secret_key_base_path")"
 fi
 
 /app/bin/faultline eval 'Faultline.Release.migrate()'

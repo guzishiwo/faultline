@@ -20,8 +20,9 @@ if System.get_env("PHX_SERVER") do
   config :faultline, FaultlineWeb.Endpoint, server: true
 end
 
-config :faultline, FaultlineWeb.Endpoint,
-  http: [port: String.to_integer(System.get_env("PORT", "4010"))]
+endpoint_port = String.to_integer(System.get_env("PORT", "4010"))
+
+config :faultline, FaultlineWeb.Endpoint, http: [port: endpoint_port]
 
 if config_env() == :prod do
   database_path = System.get_env("DATABASE_PATH") || "/data/faultline.db"
@@ -53,12 +54,28 @@ if config_env() == :prod do
   host =
     System.get_env("PHX_HOST") ||
       System.get_env("RAILWAY_PUBLIC_DOMAIN") ||
-      "example.com"
+      "localhost"
+
+  local_host? = host in ["localhost", "127.0.0.1", "::1"]
+  scheme = System.get_env("PHX_SCHEME") || if(local_host?, do: "http", else: "https")
+
+  url_port =
+    String.to_integer(
+      System.get_env("PHX_URL_PORT") ||
+        if(scheme == "http", do: Integer.to_string(endpoint_port), else: "443")
+    )
+
+  dsn_base_url =
+    if (scheme == "https" && url_port == 443) || (scheme == "http" && url_port == 80) do
+      "#{scheme}://#{host}"
+    else
+      "#{scheme}://#{host}:#{url_port}"
+    end
 
   config :faultline, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
 
   config :faultline, FaultlineWeb.Endpoint,
-    url: [host: host, port: 443, scheme: "https"],
+    url: [host: host, port: url_port, scheme: scheme],
     http: [
       # Enable IPv6 and bind on all interfaces.
       # Set it to  {0, 0, 0, 0, 0, 0, 0, 1} for local network only access.
@@ -68,7 +85,7 @@ if config_env() == :prod do
     ],
     secret_key_base: secret_key_base
 
-  config :faultline, Faultline.Projects, dsn_base_url: "https://#{host}"
+  config :faultline, Faultline.Projects, dsn_base_url: dsn_base_url
 
   # ## SSL Support
   #

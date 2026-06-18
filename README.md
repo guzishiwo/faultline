@@ -161,20 +161,40 @@ iex -S mix phx.server
 
 ## Docker
 
-Build and run a single-node container:
+Run the published container with a persistent SQLite volume:
+
+```sh
+docker run --pull always -d --name faultline --restart unless-stopped -p 4010:4010 -v faultline-data:/data -e PHX_HOST=localhost ghcr.io/guzishiwo/faultline:latest
+```
+
+Then open:
+
+```text
+http://localhost:4010
+```
+
+The named Docker volume `faultline-data` stores both the SQLite database and the
+generated Phoenix secret:
+
+```text
+/data/faultline.db
+/data/secret_key_base
+```
+
+Build and run a local image:
 
 ```sh
 docker build -t faultline .
 
 docker run -p 4010:4010 \
   -v faultline-data:/data \
-  -e PHX_HOST=errors.example.com \
-  -e SECRET_KEY_BASE="$(mix phx.gen.secret)" \
+  -e PHX_HOST=localhost \
   faultline
 ```
 
 `PHX_HOST` should be the public HTTPS host that browsers and SDKs can reach. It
-must be a host name only, without `https://`.
+must be a host name only, without `https://`. Use `localhost` for local Docker
+runs and your real domain in production.
 
 Good:
 
@@ -194,7 +214,9 @@ Production data is stored at:
 /data/faultline.db
 ```
 
-Always mount `/data` to persistent storage.
+Always mount `/data` to persistent storage. If `SECRET_KEY_BASE` is not set, the
+container generates one and stores it at `/data/secret_key_base`, so cookies stay
+valid across restarts as long as the volume is kept.
 
 ## Railway Deployment
 

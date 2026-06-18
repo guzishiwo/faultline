@@ -39,7 +39,6 @@ WORKDIR /app
 ENV HOME=/app \
   MIX_ENV=prod \
   PHX_SERVER=true \
-  DATABASE_PATH=/data/faultline.db \
   PORT=4010
 
 COPY --from=build /app/_build/prod/rel/faultline ./
