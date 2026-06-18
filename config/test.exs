@@ -12,7 +12,8 @@ config :faultline, Faultline.Repo,
   database:
     Path.expand("../tmp/faultline_test#{System.get_env("MIX_TEST_PARTITION")}.db", __DIR__),
   pool: Ecto.Adapters.SQL.Sandbox,
-  pool_size: System.schedulers_online() * 2
+  pool_size: System.schedulers_online() * 2,
+  busy_timeout: 15_000
 
 # We don't run a server during test. If one is required,
 # you can enable the server option below.
